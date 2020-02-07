@@ -11,15 +11,14 @@ library(maps)
 library(mapdata)
 library(dplyr)
 
-setwd("C:/Users/Merling/Desktop/Manuskipte/urban ecology/statistics/Tabellen")
+#setwd("")
 
 ############################# behavioural flexibility #####################################################
 
-table_per_nest <- read_excel("./table per nest.xlsx")
+table_per_nest <- read_excel("./goshawk_data_nest.xlsx")
 
-goshawk_nest1 <- subset(table_per_nest, Species=="Goshawk")
-goshawk_nest <- subset(goshawk_nest1, Year=="2015"|Year=="2016")
-goshawk_nest <- goshawk_nest[, c("Year", "Location","Age_average", "Age_youngest", "No_nestlings","Laying_begin_day","Territory", "Habitat","no_reaction","calling","feint_attack","physical_attack","reaction_female","Rainfall", "Age_oldest")]
+goshawk_nest1 <- subset(table_per_nest, Year=="2015"|Year=="2016")
+goshawk_nest <- goshawk_nest1[, c("Year", "Location","Age_average", "Age_youngest", "No_nestlings","Laying_begin_day","Territory", "Habitat","no_reaction","calling","feint_attack","physical_attack","reaction_female","Rainfall", "Age_oldest")]
 goshawk_nest$Year <- as.factor(goshawk_nest$Year)
 goshawk_nest$Location <- as.factor(goshawk_nest$Location)
 goshawk_nest$Territory <- as.factor(goshawk_nest$Territory)
@@ -227,7 +226,7 @@ dev.off()
 ###################### Diet composition ####################################################################
 ##### figure
 
-Rupfungen_gesamt <- read_excel("./Rupfungen_gesamt.xlsx")
+Rupfungen_gesamt <- read_excel("./Goshawk_data_diet_plot.xlsx")
 n_land <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Land", ])
 n_stadt <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Stadt", ])
 
@@ -268,10 +267,9 @@ ggplot(cut_off2, aes(x = species, y = prop, fill = Habitat, ymin = CI_lwr, ymax 
 ggsave(filename = "species_plot.pdf", width = 10, height =  7)
 
 ########## pigeons ###################
-Rupfungen_per_nest_aktuell <- read_excel("./Rupfungen_per_nest_aktuell.xlsx")
+Rupfungen_per_nest_aktuell <- read_excel("./goshawk_data_diet.xlsx")
 
-pigeon<-Rupfungen_per_nest_aktuell
-pigeon <- pigeon[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500","Rest","Pigeon","Total","Stadttaube", "Ringeltaube","Pigeon_Rest","Pigeon_Rest_Woodpigeon", "Longitude","Latitude","Species_richness_nest")]
+pigeon <- Rupfungen_per_nest_aktuell[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500","Rest","Pigeon","Total","Stadttaube", "Ringeltaube","Pigeon_Rest","Pigeon_Rest_Woodpigeon", "Longitude","Latitude","Species_richness_nest")]
 pigeon$Location <- as.factor(pigeon$Location)
 pigeon$nest_side <- as.factor(pigeon$nest_side)
 pigeon$Habitat <- as.factor(pigeon$Habitat)
@@ -310,10 +308,9 @@ anova(GLMM_0_loc, GLMM_pigeon_SpaMM_loc, boot.repl = 1000, nb_cores = 3)
 
 ############ diversity ######################
 
-Rupfungen_per_nest_aktuell <- read_excel("./Rupfungen_per_nest_aktuell.xlsx")
+Rupfungen_per_nest_aktuell <- read_excel("./goshawk_data_diet.xlsx")
 
-diversity<-Rupfungen_per_nest_aktuell
-diversity <- diversity[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500", "Longitude","Latitude","diversity_nest")]
+diversity <- Rupfungen_per_nest_aktuell[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500", "Longitude","Latitude","diversity_nest")]
 diversity$Location <- as.factor(diversity$Location)
 diversity$nest_side <- as.factor(diversity$nest_side)
 diversity$Habitat <- as.factor(diversity$Habitat)
@@ -390,10 +387,9 @@ anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = 1000, nb_cores = 3)
 
 ################# species richness ############################################################################################
 
-Rupfungen_per_nest_aktuell <- read_excel("./Rupfungen_per_nest_aktuell.xlsx")
+Rupfungen_per_nest_aktuell <- read_excel("./goshawk_data_diet.xlsx")
 
-species<-Rupfungen_per_nest_aktuell
-species <- species[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500", "Longitude","Latitude","Species_richness_nest")]
+species <- Rupfungen_per_nest_aktuell[, c("Total","Location","nest_side", "Habitat","imperviousness2500","treecover2500", "Longitude","Latitude","Species_richness_nest")]
 species$Location <- as.factor(species$Location)
 species$nest_side <- as.factor(species$nest_side)
 species$Habitat <- as.factor(species$Habitat)
@@ -441,10 +437,9 @@ anova(glm_species_spaMM, glm_0_spaMM, boot.repl = 1000, nb_cores = 3)
 
 ########### Breeding performance #########################################################################################
 ### Laying date ###
-table_per_nest <- read_excel("./table per nest.xlsx")
+table_per_nest <- read_excel("./goshawk_data_nest.xlsx")
 
-goshawk_nest1 <- subset(table_per_nest, Species=="Goshawk")
-goshawk_nest2 <- goshawk_nest1[, c("Year", "Location", "No_nestlings","Laying_begin_day","Territory", "Latitude", "Longitude", "Habitat","imperviousness2500","Temperature", "Temp_breeding_begin","Temp_mid_Feb_Mar","Temp_laying_begin","Rainfall", "Age_oldest")]
+goshawk_nest2 <- table_per_nest[, c("Year", "Location", "No_nestlings","Laying_begin_day","Territory", "Latitude", "Longitude", "Habitat","imperviousness2500","Temperature", "Temp_breeding_begin","Temp_mid_Feb_Mar","Temp_laying_begin","Rainfall", "Age_oldest")]
 goshawk_nest2$Year <- as.factor(goshawk_nest2$Year)
 goshawk_nest2$Location <- as.factor(goshawk_nest2$Location)
 goshawk_nest2$Territory <- as.factor(goshawk_nest2$Territory)
@@ -494,10 +489,9 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = 1000, nb_cores = 3)
 
 
 ### reproductive output (number of nestlings) ###
-table_per_nest <- read_excel("./table per nest.xlsx")
+table_per_nest <- read_excel("./goshawk_data_nest.xlsx")
 
-goshawk_nest1 <- subset(table_per_nest, Species=="Goshawk")
-goshawk_nest3 <- goshawk_nest1[, c("Year", "Location", "No_nestlings","Laying_begin_day","Territory", "Latitude", "Longitude", "Habitat","imperviousness2500","Temperature", "Temp_breeding_begin","Temp_mid_Feb_Mar","Temp_laying_begin","Rainfall", "Age_oldest","female","male")]
+goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings","Laying_begin_day","Territory", "Latitude", "Longitude", "Habitat","imperviousness2500","Temperature", "Temp_breeding_begin","Temp_mid_Feb_Mar","Temp_laying_begin","Rainfall", "Age_oldest","female","male")]
 goshawk_nest3$Year <- as.factor(goshawk_nest3$Year)
 goshawk_nest3$Location <- as.factor(goshawk_nest3$Location)
 goshawk_nest3$Territory <- as.factor(goshawk_nest3$Territory)
@@ -614,11 +608,10 @@ anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = 1000, nb_cores = 3)
 ###################### Health status of goshawk nestlings ####################################
 
 #### prevalence ####
-Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./Tabelle Statistik urban ecology aktuell.xlsx")
+Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./Goshawk_data_nestlings.xlsx")
 
 
-goshawk_urban <- subset(Tabelle_Statistik_urban_ecology_aktuell, Species=="Goshawk")
-goshawk_urban <- goshawk_urban[, c("Year", "Location", "Clinical_signs", "No_nestlings", "Sex","Age","Prevalence","Territory", "Latitude", "Longitude", "Habitat","laying_day","Temp_age", "Clinical_binary")]
+goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location", "Clinical_signs", "No_nestlings", "Sex","Age","Prevalence","Territory", "Latitude", "Longitude", "Habitat","laying_day","Temp_age", "Clinical_binary")]
 goshawk_urban$Year <- as.factor(goshawk_urban$Year)
 goshawk_urban$Location <- as.factor(goshawk_urban$Location)
 goshawk_urban$Territory <- as.factor(goshawk_urban$Territory)
@@ -840,7 +833,7 @@ dev.off()
 
 ###################### Causes of mortality ############################################################
 ###### tricho######
-Todesursachen_Statistik <- read_excel("./Todesursachen_Statistik.xlsx")
+Todesursachen_Statistik <- read_excel("./goshawk_data_death.xlsx")
 
 death <- Todesursachen_Statistik[, c("age","location","Trichomonosiasis","Cachexia" ,"Trauma (window)", "Year", "sex")]
 death$location <- as.factor(death$location)
@@ -953,7 +946,7 @@ anova(glm_death_no_sex2, glm_death2, boot.repl = 1000, nb_cores = 3)
 
 ##### figure ###
 
-Todesursachen_Statistik <- read_excel("./Todesursachen_Statistik.xlsx")
+Todesursachen_Statistik <- read_excel("./goshawk_data_death.xlsx")
 Todesursachen_Statistik <- Todesursachen_Statistik %>% 
   mutate(Cause_of_death = ifelse(Cause_of_death == "Unknwon", "Unknown", 
                                  ifelse(Cause_of_death == "Trichmononosis", "Trichomonosis", 
@@ -1026,7 +1019,7 @@ ggsave(filename = "map_plot.pdf", width = 7, height = 10)
 
 ### Figures SI2
 
-table_per_nest <- read_excel("./table per nest.xlsx")
+table_per_nest <- read_excel("./goshawk_data_nest.xlsx")
 
 goshawk_imper <- subset(table_per_nest, Species=="Goshawk")
 goshawk_imper <- as.data.frame(goshawk_imper)
