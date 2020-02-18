@@ -4,6 +4,7 @@ library(readxl)
 library(spaMM)
 library(DHARMa)
 library(lme4) 
+library(car)
 library(purrr)
 library(binom)
 library(ggplot2)
@@ -11,7 +12,9 @@ library(maps)
 library(mapdata)
 library(dplyr)
 library(doSNOW)
-spaMM.options(nb_cores = 3, separation_max = 1) 
+spaMM.options(nb_cores = 3, separation_max = 1)
+boot.repl <- 1000
+nb_cores <- 3
 
 
 ############################# behavioural flexibility #####################################################
@@ -19,10 +22,9 @@ spaMM.options(nb_cores = 3, separation_max = 1)
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest1 <- subset(table_per_nest, Year == "2015" | Year == "2016")
-goshawk_nest <- goshawk_nest1[, c("Year", "Location", "Age_average", "Age_youngest", "No_nestlings",
-                                  "Laying_begin_day", "Territory", "Habitat", "no_reaction", "calling",
-                                  "feint_attack", "physical_attack", "reaction_female", "Rainfall",
-                                  "Age_oldest")]
+goshawk_nest <- goshawk_nest1[, c("Year", "Location", "Age_youngest", "No_nestlings",
+                                  "Laying_begin_day", "Territory", "Habitat", 
+                                  "reaction_female", "Rainfall")]
 goshawk_nest$Year <- as.factor(goshawk_nest$Year)
 goshawk_nest$Location <- as.factor(goshawk_nest$Location)
 goshawk_nest$Territory <- as.factor(goshawk_nest$Territory)
@@ -41,51 +43,54 @@ str(goshawk_nest)
 urban <- subset(goshawk_nest, Habitat == "urban")
 rural <- subset(goshawk_nest, Habitat == "rural")
 
-test_react_int <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                        family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-
-sim_react <- simulateResiduals(test_react_int) 
-plot(sim_react)
-
-# multicollinearity
-cov2cor(vcov(test_react_int))
-
-# 2. Error structure
-testSpatialAutocorrelation(sim_react, y = jitter(goshawk_nest$Latitude, factor = 0.001),
-                           x = jitter(goshawk_nest$Longitude, factor = 0.001))
-
+test_react_int <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
+                        Year + Rainfall + (1|Location/Territory),
+                        family = binomial(link = "logit"), data = goshawk_nest, 
+                        method = "PQL/L")
 
 test_react_0 <- fitme(reaction~1+(1|Location/Territory),
-                      family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+                      family = binomial(link = "logit"), data = goshawk_nest, 
+                      method = "PQL/L")
 anova(test_react_int, test_react_0)
 
 ## effects
-test_no_Hab_age <- fitme(reaction ~ No_nestlings +  Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                         family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_no_Hab_age <- fitme(reaction ~ No_nestlings +  Laying_begin_day + Year + 
+                         Rainfall + (1|Location/Territory), 
+                         family = binomial(link = "logit"), data = goshawk_nest, 
+                         method = "PQL/L")
 anova(test_react_int, test_no_Hab_age)
 
-test_noHabitat <- fitme(reaction ~ Age + No_nestlings +  Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                        family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_noHabitat <- fitme(reaction ~ Age + No_nestlings +  Laying_begin_day + Year + 
+                        Rainfall + (1|Location/Territory),
+                        family = binomial(link = "logit"), data = goshawk_nest, 
+                        method = "PQL/L")
 anova(test_react_int, test_noHabitat)
 
-test_nonest <- fitme(reaction ~ Habitat*Age + Laying_begin_day + Year +  Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_nonest <- fitme(reaction ~ Habitat*Age + Laying_begin_day + Year +  Rainfall 
+                     + (1|Location/Territory), family = binomial(link = "logit"), 
+                     data = goshawk_nest, method = "PQL/L")
 anova(test_react_int, test_nonest)
 
-test_noYear <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_noYear <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
+                     Rainfall + (1|Location/Territory), 
+                     family = binomial(link = "logit"), data = goshawk_nest, 
+                     method = "PQL/L")
 anova(test_react_int, test_noYear)
 
-test_noDay <- fitme(reaction ~ Habitat*Age + No_nestlings +  Year + Rainfall + (1|Location/Territory),
-                    family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_noDay <- fitme(reaction ~ Habitat*Age + No_nestlings +  Year + Rainfall 
+                    + (1|Location/Territory), family = binomial(link = "logit"), 
+                    data = goshawk_nest, method = "PQL/L")
 anova(test_react_int, test_noDay)
 
-test_noRain <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + Year + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_noRain <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
+                     Year + (1|Location/Territory), family = binomial(link = "logit"),
+                     data = goshawk_nest, method = "PQL/L")
 anova(test_react_int, test_noRain)
 
-test_noYoung <- fitme(reaction ~ Habitat + Rainfall + No_nestlings + Laying_begin_day + Year + (1|Location/Territory),
-                      family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_noYoung <- fitme(reaction ~ Habitat + Rainfall + No_nestlings + 
+                      Laying_begin_day + Year + (1|Location/Territory),
+                      family = binomial(link = "logit"), data = goshawk_nest, 
+                      method = "PQL/L")
 anova(test_react_int, test_noYoung)
 
 #### Habitat
@@ -116,46 +121,34 @@ odd_ratio_urban_young_vs_urban_old <- round(OR(prob_urban_young, prob_urban_old)
 odd_ratio_rural_young_vs_rural_old <- round(OR(prob_rural_young, prob_rural_old), 2)
 
 #### bootstrap
-test_noHabitat <- fitme(reaction ~ Age + No_nestlings +  Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                        family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_noHabitat, boot.repl = 1000, nb_cores = 3)
-
-test_nonest <- fitme(reaction ~ Habitat*Age + Laying_begin_day + Year +  Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_nonest, boot.repl = 1000, nb_cores = 3)
-
-test_noYear <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_noYear, boot.repl = 1000, nb_cores = 3)
-
-test_noDay <- fitme(reaction ~ Habitat*Age + No_nestlings +  Year + Rainfall + (1|Location/Territory),
-                    family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_noDay, boot.repl = 1000, nb_cores = 3)
-
-test_noRain <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + Year + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_noRain, boot.repl = 1000, nb_cores = 3)
-
-test_noYoung <- fitme(reaction ~ Habitat + Rainfall + No_nestlings + Laying_begin_day + Year + (1|Location/Territory),
-                      family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-anova(test_react_int, test_noYoung, boot.repl = 1000, nb_cores = 3)
+anova(test_react_int, test_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_react_int, test_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_react_int, test_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_react_int, test_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_react_int, test_noRain, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
 
 ##### test without interaction ###############
 
-test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day + 
+                     Year + Rainfall + (1|Location/Territory),
+                     family = binomial(link = "logit"), data = goshawk_nest, 
+                     method = "PQL/L")
 round(exp(fixef(test_no_int)["Habitaturban"]), 2)
 
-test_no_Habitat <- fitme(reaction ~ Age + No_nestlings + Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                         family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
-test_no_Age <- fitme(reaction ~ Habitat + No_nestlings + Laying_begin_day + Year + Rainfall + (1|Location/Territory),
-                     family = binomial(link = "logit"), data = goshawk_nest, method = "PQL/L")
+test_no_Habitat <- fitme(reaction ~ Age + No_nestlings + Laying_begin_day + Year + 
+                         Rainfall + (1|Location/Territory),
+                         family = binomial(link = "logit"), data = goshawk_nest, 
+                         method = "PQL/L")
+test_no_Age <- fitme(reaction ~ Habitat + No_nestlings + Laying_begin_day + Year + 
+                     Rainfall + (1|Location/Territory),
+                     family = binomial(link = "logit"), data = goshawk_nest, 
+                     method = "PQL/L")
 
 
-##anova(test_int, test_no_int, boot.repl = 1000) ## TODO: fix
-
-anova(test_no_int, test_no_Age, boot.repl = 1000)
-anova(test_no_int, test_no_Habitat, boot.repl = 1000)
+anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores =nb_cores)
+anova(test_no_int, test_no_Age, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(test_no_int, test_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 
 #### figures #####################
 #### barplot raw data
@@ -174,6 +167,8 @@ plot_data <- goshawk_nest %>%
          CI_lwr = map2_dbl(n, total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 5])), ## method exact
          CI_upr = map2_dbl(n, total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## method exact
 
+
+plot_data$reaction_female <- relevel(plot_data$reaction_female, ref = "no reaction")
 plot_data$Habitat <- relevel(plot_data$Habitat, ref = "urban")
 ggplot(plot_data, aes(x = reaction_female, y = prop, fill = Habitat, ymin = CI_lwr, ymax = CI_upr)) +
   geom_bar(stat = "identity", position = position_dodge2(preserve = "single", width = 0.9), alpha = 0.8) +
@@ -185,7 +180,8 @@ ggplot(plot_data, aes(x = reaction_female, y = prop, fill = Habitat, ymin = CI_l
   theme(panel.grid.minor = element_blank(), 
         panel.grid.major.x = element_blank()) 
 
-ggsave(filename = "./figures/reaction_female_plot.pdf", width = 8, height =  7)
+ggsave(filename = "reaction_female_plot.pdf", width = 8, height =  7)
+
 
 # predicite barplot Habitat/Age
 
@@ -197,7 +193,8 @@ pred_urban_young <- predict(test_no_int,
                                                   Year = "2015",
                                                   Habitat = "urban"),
                             re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
-pred_1 <- data.frame(pred = pred_urban_young, attr(pred_urban_young, "intervals"), Habitat = "urban", Age = "young")
+pred_1 <- data.frame(pred = pred_urban_young, attr(pred_urban_young, "intervals"), 
+                     Habitat = "urban", Age = "young")
 pred_1
 
 pred_urban_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
@@ -207,7 +204,8 @@ pred_urban_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = 
                                                              Year = "2015",
                                                              Habitat = "urban"),
                           re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
-pred_2 <- data.frame(pred = pred_urban_old, attr(pred_urban_old, "intervals"), Habitat = "urban", Age = "old")
+pred_2 <- data.frame(pred = pred_urban_old, attr(pred_urban_old, "intervals"), 
+                     Habitat = "urban", Age = "old")
 
 pred_rural_young <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
                                                                Age = "young",
@@ -216,7 +214,8 @@ pred_rural_young <- predict(test_no_int, newdata = expand.grid(Laying_begin_day 
                                                                Year = "2015",
                                                                Habitat = "rural"),
                             re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
-pred_3 <- data.frame(pred = pred_rural_young, attr(pred_rural_young, "intervals"), Habitat = "rural", Age = "young")
+pred_3 <- data.frame(pred = pred_rural_young, attr(pred_rural_young, "intervals"), 
+                     Habitat = "rural", Age = "young")
 
 pred_rural_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
                                                              Age = "old",
@@ -225,7 +224,8 @@ pred_rural_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = 
                                                              Year = "2015",
                                                              Habitat = "rural"),
                           re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
-pred_4 <- data.frame(pred = pred_rural_old, attr(pred_rural_old, "intervals"), Habitat = "rural", Age = "old")
+pred_4 <- data.frame(pred = pred_rural_old, attr(pred_rural_old, "intervals"), 
+                     Habitat = "rural", Age = "old")
 
 pred_Habitat_age <- rbind(pred_1, pred_2, pred_3, pred_4)
 
@@ -337,38 +337,18 @@ ggsave(filename = "./figures/species_plot.pdf", width = 10, height =  7)
 ########## pigeons ###################
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
-pigeon <- Rupfungen_per_nest_aktuell[, c("Total", "Location", "nest_side", "Habitat",
-                                         "imperviousness2500", "treecover2500", "Rest", "Pigeon",
-                                         "Total", "Stadttaube", "Ringeltaube", "Pigeon_Rest",
-                                         "Pigeon_Rest_Woodpigeon", "Longitude", "Latitude",
-                                         "Species_richness_nest")]
+pigeon <- Rupfungen_per_nest_aktuell[, c("Location", "nest_side", "Habitat",
+                                         "Species_richness_nest", "Pigeon", "Rest")]
 pigeon$Location <- as.factor(pigeon$Location)
 pigeon$nest_side <- as.factor(pigeon$nest_side)
 pigeon$Habitat <- as.factor(pigeon$Habitat)
-pigeon$Longitude <- as.numeric(pigeon$Longitude)
-pigeon$Latitude <- as.numeric(pigeon$Latitude)
 pigeon <- as.data.frame(pigeon)
 str(pigeon)
 
-#### location######
 GLMM_pigeon_SpaMM_loc <- fitme(cbind(Pigeon, Rest)~Habitat + (1|Location/nest_side),
                                family = binomial(link = "logit"),
                                data = pigeon,
                                method = "PQL/L")
-
-# 1. linearity
-sim_pigeon <- simulateResiduals(GLMM_pigeon_SpaMM_loc)
-plot(sim_pigeon)
-testUniformity(sim_pigeon)
-
-# 2. multicollinearity  just one factor
-
-# 3. Error structure
-testSpatialAutocorrelation(sim_pigeon, x = jitter(pigeon$Longitude), y = jitter(pigeon$Latitude))
-
-# 4. test for overdispersion and zero inflation
-testDispersion(sim_pigeon)
-testZeroInflation(sim_pigeon)
 
 GLMM_0_loc <- fitme(cbind(Pigeon, Rest) ~ 1 + (1|Location/nest_side),
                     family = binomial(link = "logit"),
@@ -381,51 +361,25 @@ ODD <- exp(GLMM_pigeon_SpaMM_loc$fixef)
 ODD #3.654
 
 #### bootstrap ###
-GLMM_0_loc <- fitme(cbind(Pigeon, Rest) ~ 1 + (1|Location/nest_side),
-                    family = binomial(link = "logit"),
-                    data = pigeon,
-                    method = "PQL/L")
-anova(GLMM_0_loc, GLMM_pigeon_SpaMM_loc, boot.repl = 1000, nb_cores = 3) 
+anova(GLMM_0_loc, GLMM_pigeon_SpaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
 
 ############ diversity ######################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
-diversity <- Rupfungen_per_nest_aktuell[, c("Total", "Location", "nest_side", "Habitat",
-                                            "imperviousness2500", "treecover2500", "Longitude",
-                                            "Latitude", "diversity_nest")]
+diversity <- Rupfungen_per_nest_aktuell[, c("Location", "nest_side", "Habitat",
+                                            "diversity_nest")]
 diversity$Location <- as.factor(diversity$Location)
 diversity$nest_side <- as.factor(diversity$nest_side)
 diversity$Habitat <- as.factor(diversity$Habitat)
-diversity$Longitude <- as.numeric(diversity$Longitude)
-diversity$Latitude <- as.numeric(diversity$Latitude)
 diversity$diversity_nest <- as.numeric(diversity$diversity_nest)
 diversity <- na.omit(diversity)
 diversity <- as.data.frame(diversity)
 str(diversity)
 
-lmm_diversity <- fitme(diversity_nest ~ Habitat+(1|Location), data = diversity)
 
-# linearity
-sim_diversity <- simulateResiduals(lmm_diversity) 
-plot(sim_diversity)
-
-# multicollinearity
-
-
-# 2. Error structure
-# spatial autocorrelation 
-testSpatialAutocorrelation(sim_diversity,
-                           y = jitter(species$Latitude, factor = 0.001),
-                           x = jitter(species$Longitude, factor = 0.001))
-
-# test for overdispersion and zero inflation
-testDispersion(sim_diversity) ### Overdispersion!
-
-testZeroInflation(sim_diversity) ## gibt keine 0
-
-########
-lmer_diversity <- lmer(diversity_nest ~ Habitat + (1|Location), data = diversity, REML = FALSE)
+lmer_diversity <- lmer(diversity_nest ~ Habitat + (1|Location), 
+                       data = diversity, REML = FALSE)
 
 spaMM_diversity_coor <- fitme(diversity_nest ~ Habitat +(1|Location), data = diversity)
 
@@ -437,25 +391,8 @@ spaMM_diversity3 <- update(spaMM_diversity_coor, bcPower(diversity_nest, bc_lmer
 logLik(lmer_diversity2)
 logLik(spaMM_diversity3)
 
-# linearity
-sim_diversity <- simulateResiduals(spaMM_diversity3) 
-plot(sim_diversity)
-
-# multicollinearity
-
-
-# 2. Error structure
-# spatial autocorrelation 
-testSpatialAutocorrelation(sim_diversity,
-                           y = jitter(species$Latitude, factor = 0.001),
-                           x = jitter(species$Longitude, factor = 0.001))
-
-# test for overdispersion and zero inflation
-testDispersion(sim_diversity)
-
-testZeroInflation(sim_diversity)
-
-lmer_diversity_0 <- lmer(diversity_nest ~ 1 + (1|Location), data = diversity, REML = FALSE)
+lmer_diversity_0 <- lmer(diversity_nest ~ 1 + (1|Location), data = diversity, 
+                         REML = FALSE)
 spaMM_diversity_0 <- fitme(diversity_nest ~ 1 + (1|Location), data = diversity)
 
 lmer_diversity_upda <- update(lmer_diversity_0, bcPower(diversity_nest, bc_lmer$lambda) ~ .)
@@ -469,21 +406,19 @@ pred_trans_urban <- ((spaMM_diversity3$fixef["(Intercept)"] + spaMM_diversity3$f
 pred_trans_urban - pred_trans_rural
 
 ### bootstrap
-anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = 1000, nb_cores = 3)
+anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
 ################# species richness ############################################################################################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
-species <- Rupfungen_per_nest_aktuell[, c("Total", "Location","nest_side", "Habitat", 
-                                          "imperviousness2500", "treecover2500", "Longitude", 
-                                          "Latitude", "Species_richness_nest")]
+species <- Rupfungen_per_nest_aktuell[, c("Location","nest_side", "Habitat", 
+                                          "Species_richness_nest")]
+
 species$Location <- as.factor(species$Location)
 species$nest_side <- as.factor(species$nest_side)
 species$Habitat <- as.factor(species$Habitat)
-species$Longitude <- as.numeric(species$Longitude)
-species$Latitude <- as.numeric(species$Latitude)
 species$Species_richness_nest <- as.numeric(species$Species_richness_nest)
 species <- na.omit(species)
 species <- as.data.frame(species)
@@ -493,39 +428,20 @@ glm_species_spaMM <- fitme(Species_richness_nest ~ Habitat+(1|Location),
                            family = Tnegbin(),
                            data = species)
 
-# 1. Model structure
-
-# linearity
-sim_species <- simulateResiduals(glm_species_spaMM, integerResponse = TRUE) 
-plot(sim_species)
-testUniformity(sim_species)
-
-# multicollinearity
-
-
-# 2. Error structure
-# spatial autocorrelation 
-testSpatialAutocorrelation(sim_species,
-                           y = jitter(species$Latitude, factor = 0.001),
-                           x = jitter(species$Longitude, factor = 0.001))
-
-# test for overdispersion and zero inflation
-testDispersion(sim_species) 
-
-testZeroInflation(sim_species) 
-
-
-glm_0_spaMM <- fitme(Species_richness_nest ~ 1+(1|Location), family = Tnegbin, data = species)
+glm_0_spaMM <- fitme(Species_richness_nest ~ 1 + (1|Location), 
+                     family = Tnegbin, data = species)
 anova(glm_species_spaMM, glm_0_spaMM)
 
 
 # Habitat Effekt
-predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")), re.form = NA)
+predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")), 
+        re.form = NA)
 
-diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")), re.form = NA))
+diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")),
+             re.form = NA))
 
 #### bootstrap 
-anova(glm_species_spaMM, glm_0_spaMM, boot.repl = 1000, nb_cores = 3)
+anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
 ########### Breeding performance #########################################################################################
@@ -533,10 +449,7 @@ anova(glm_species_spaMM, glm_0_spaMM, boot.repl = 1000, nb_cores = 3)
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest2 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
-                                    "Territory", "Latitude", "Longitude", "Habitat", 
-                                    "imperviousness2500", "Temperature", "Temp_breeding_begin", 
-                                    "Temp_mid_Feb_Mar", "Temp_laying_begin", "Rainfall", 
-                                    "Age_oldest")]
+                                    "Territory",  "Habitat", "Temp_breeding_begin")]
 goshawk_nest2$Year <- as.factor(goshawk_nest2$Year)
 goshawk_nest2$Location <- as.factor(goshawk_nest2$Location)
 goshawk_nest2$Territory <- as.factor(goshawk_nest2$Territory)
@@ -545,63 +458,38 @@ goshawk_nest2 <- as.data.frame(goshawk_nest2)
 goshawk_nest2 <- droplevels(na.omit(goshawk_nest2))
 str(goshawk_nest2)
 
-#### location#####
-lmm_laying2 <- fitme(Laying_begin_day ~ Habitat + Temp_breeding_begin  + (1|Location/Territory),
-                     family = gaussian, data = goshawk_nest2)
-
-
-# 1. linearity
-sim_laying <- simulateResiduals(lmm_laying2)
-plot(sim_laying)
-testUniformity(sim_laying)
-
-# 2. multicollinearity  
-cov2cor(vcov(lmm_laying2))
-
-# 3. Error structure
-testSpatialAutocorrelation(sim_laying,
-                           x = jitter(goshawk_nest2$Longitude),
-                           y = jitter(goshawk_nest2$Latitude))
-
-# 4. test for overdispersion and zero inflation
-testDispersion(sim_laying)
-testZeroInflation(sim_laying)
+lmm_laying2 <- fitme(Laying_begin_day ~ Habitat + Temp_breeding_begin  + 
+                     (1|Location/Territory), family = gaussian, data = goshawk_nest2)
 
 # test against zero model
-lmm_0 <- fitme(Laying_begin_day ~ 1+(1|Location/Territory),
+lmm_0 <- fitme(Laying_begin_day ~ 1 + (1|Location/Territory),
                family = gaussian,
                data = goshawk_nest2)
 anova(lmm_laying2, lmm_0) 
 
 # odds
-
 lmm_laying2$fixef["Habitaturban"] 
 
 ### test  effects
-
-lmm_laying_no_Habitat <- fitme(Laying_begin_day ~ Temp_breeding_begin + (1|Location/Territory),
-                               family = gaussian,
-                               data = goshawk_nest2)
+lmm_laying_no_Habitat <- fitme(Laying_begin_day ~ Temp_breeding_begin + 
+                              (1|Location/Territory), family = gaussian,
+                              data = goshawk_nest2)
 anova(lmm_laying2, lmm_laying_no_Habitat)
 
 lmm_laying_no_Temp <- fitme(Laying_begin_day ~ Habitat + (1|Location/Territory),
-                            family = gaussian,
-                            data = goshawk_nest2)
+                            family = gaussian, data = goshawk_nest2)
 anova(lmm_laying2, lmm_laying_no_Temp)
 
 ### bootstrap
-anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = 1000, nb_cores = 3)
-anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = 1000, nb_cores = 3)
+anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-### reproductive output (number of nestlings) ###
+########## reproductive output (number of nestlings) ############
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
-                                    "Territory", "Latitude", "Longitude", "Habitat",
-                                    "imperviousness2500", "Temperature", "Temp_breeding_begin",
-                                    "Temp_mid_Feb_Mar", "Temp_laying_begin", "Rainfall", 
-                                    "Age_oldest", "female", "male")]
+                                    "Territory", "Habitat", "Temp_breeding_begin")]
 goshawk_nest3$Year <- as.factor(goshawk_nest3$Year)
 goshawk_nest3$Location <- as.factor(goshawk_nest3$Location)
 goshawk_nest3$Territory <- as.factor(goshawk_nest3$Territory)
@@ -612,51 +500,41 @@ goshawk_nest3 <- droplevels(na.omit(goshawk_nest3))
 goshawk_nest3$No_nestlings_binary <- goshawk_nest3$No_nestlings > 2
 table(goshawk_nest3$No_nestlings_binary)
 
-glmm_nestlings <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day + Temp_breeding_begin + (1|Location/Territory),
-                        family = binomial(link = "logit"), data = goshawk_nest3, method = "PQL/L")
+glmm_nestlings <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day + 
+                        Temp_breeding_begin + (1|Location/Territory),
+                        family = binomial(link = "logit"), data = goshawk_nest3, 
+                        method = "PQL/L")
 
-sim_nestling <- simulateResiduals(glmm_nestlings) 
-plot(sim_nestling)
-testUniformity(sim_nestling)
-
-# multicollinearity
-cov2cor(vcov(glmm_nestlings))
-
-# 2. Error structure
-#testTemporalAutocorrelation(sim_nestling, time = goshawk_nest$Laying_begin_day + ifelse(goshawk_nest$Year == "2016", 365, 0))
-testSpatialAutocorrelation(sim_nestling,
-                           y = jitter(goshawk_nest3$Latitude, factor = 0.001),
-                           x = jitter(goshawk_nes3t$Longitude, factor = 0.001))
-
-# 3. Overdispersion
-# not necessary binary
-
+## 0-model
 glmm_0_spaMM <- fitme(No_nestlings_binary ~ 1 + (1|Location/Territory),
                       family = binomial(link = "logit"),
                       data = goshawk_nest3,
                       method = "PQL/L")
 anova(glmm_nestlings, glmm_0_spaMM)
 
-glmm_nestlings_no_Habitat <- fitme(No_nestlings_binary ~ Laying_begin_day +Temp_breeding_begin + (1|Location/Territory),
-                                   family = binomial(link = "logit"), data = goshawk_nest3, method = "PQL/L")
+# effects
+glmm_nestlings_no_Habitat <- fitme(No_nestlings_binary ~ Laying_begin_day + 
+                                   Temp_breeding_begin + (1|Location/Territory),
+                                   family = binomial(link = "logit"), data = goshawk_nest3, 
+                                   method = "PQL/L")
 anova(glmm_nestlings, glmm_nestlings_no_Habitat)
 
-glmm_nestlings_no_day <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + (1|Location/Territory),
-                               family = binomial(link = "logit"), data = goshawk_nest3, method = "PQL/L")
+glmm_nestlings_no_day <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + 
+                              (1|Location/Territory), family = binomial(link = "logit"), 
+                              data = goshawk_nest3, method = "PQL/L")
 anova(glmm_nestlings, glmm_nestlings_no_day)
 
-glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day +(1|Location/Territory),
-                                family = binomial(link = "logit"), data = goshawk_nest3, method = "PQL/L")
+glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day + 
+                                (1|Location/Territory), family = binomial(link = "logit"), 
+                                data = goshawk_nest3, method = "PQL/L")
 anova(glmm_nestlings, glmm_nestlings_no_Temp)
 
-#ODDs
-exp(glmm_nestlings$fixef["Laying_begin_day"])
 
 # bootstraps
-anova(glmm_nestlings, glmm_0_spaMM, boot.repl = 1000, nb_cores = 3)
-anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = 1000, nb_cores = 3)
-anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = 1000, nb_cores = 3)
-anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = 1000, nb_cores = 3)
+anova(glmm_nestlings, glmm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 
 ##### predictive figures ####
 # subset urban/rural
@@ -701,39 +579,24 @@ axis(2, las = 2)
 
 dev.off()
 
-###### without laying start ###########################
+###### without laying start ##############################
+glmm_nestlings2 <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + 
+                        (1|Location/Territory), family = binomial(link = "logit"),
+                         data = goshawk_nest3, method = "PQL/L")
 
-glmm_nestlings2 <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + (1|Location/Territory),
-                         family = binomial(link = "logit"),
-                         data = goshawk_nest3,
-                         method = "PQL/L")
-
-sim_glm2 <- simulateResiduals(glmm_nestlings2) 
-plot(sim_glm2)
-testUniformity(sim_glm2)
-
-# multicollinearity
-cov2cor(vcov(glmm_nestlings2))
-
-# 2. Error structure
-#testTemporalAutocorrelation(sim_nestling, time = goshawk_nest$Laying_begin_day + ifelse(goshawk_nest$Year == "2016", 365, 0))
-testSpatialAutocorrelation(sim_glm2,
-                           y = jitter(goshawk_nest3$Latitude, factor = 0.001),
-                           x = jitter(goshawk_nest3$Longitude, factor = 0.001))
-
+# 0-model
 glmm_0_spaMM2 <- fitme(No_nestlings_binary ~ 1 + (1|Location/Territory),
                        family = binomial(link = "logit"),
                        data = goshawk_nest3, method = "PQL/L")
 anova(glmm_nestlings2, glmm_0_spaMM2)
 
+# Odd
 exp(glmm_nestlings2$fixef["Habitaturban"]) 
 
 #### testing effects########
-
-glmm_nestlings_no_Habitat2 <- fitme(No_nestlings_binary ~ Temp_breeding_begin + (1|Location/Territory),
-                                    family = binomial(link = "logit"),
-                                    data = goshawk_nest3,
-                                    method = "PQL/L")
+glmm_nestlings_no_Habitat2 <- fitme(No_nestlings_binary ~ Temp_breeding_begin + 
+                                    (1|Location/Territory), family = binomial(link = "logit"),
+                                    data = goshawk_nest3, method = "PQL/L")
 anova(glmm_nestlings2, glmm_nestlings_no_Habitat2)
 
 glmm_nestlings_no_Temp2 <- fitme(No_nestlings_binary ~ Habitat + (1|Location/Territory),
@@ -743,8 +606,8 @@ glmm_nestlings_no_Temp2 <- fitme(No_nestlings_binary ~ Habitat + (1|Location/Ter
 anova(glmm_nestlings2, glmm_nestlings_no_Temp2)
 
 ## bootstraps
-anova(glmm_nestlings2, glmm_nestlings_no_Habitat2, boot.repl = 1000, nb_cores = 3)
-anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = 1000, nb_cores = 3)
+anova(glmm_nestlings2, glmm_nestlings_no_Habitat2, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
 ###################### Health status of goshawk nestlings ####################################
@@ -753,10 +616,8 @@ anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = 1000, nb_cores = 3)
 Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./source_data/Goshawk_data_nestlings.xlsx")
 
 
-goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location", "Clinical_signs", 
-                                                             "No_nestlings", "Sex","Age",
-                                                             "Prevalence", "Territory", "Latitude",
-                                                             "Longitude", "Habitat", "laying_day",
+goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location","No_nestlings", "Sex", 
+                                                             "Age", "Prevalence", "Territory", "Habitat", "laying_day",
                                                              "Temp_age", "Clinical_binary")]
 goshawk_urban$Year <- as.factor(goshawk_urban$Year)
 goshawk_urban$Location <- as.factor(goshawk_urban$Location)
@@ -764,7 +625,6 @@ goshawk_urban$Territory <- as.factor(goshawk_urban$Territory)
 goshawk_urban$Sex <- as.factor(goshawk_urban$Sex)
 goshawk_urban$Habitat <- as.factor(goshawk_urban$Habitat)
 goshawk_urban$Clinical_binary <- as.numeric(goshawk_urban$Clinical_binary)
-goshawk_urban$Clinical_signs <- as.factor(goshawk_urban$Clinical_signs)
 goshawk_urban <- as.data.frame(goshawk_urban)
 goshawk_urban <- droplevels(na.omit(goshawk_urban))
 str(goshawk_urban)
@@ -795,33 +655,16 @@ ggplot(plot_data, aes(y = prop_inf, x = Year, ymin = CI_lwr, ymax = CI_upr, fill
 ggsave(filename = "./figures/year_plot.pdf", width = 8, height = 8)
 
 ##
-glmm_tricho_logit <- fitme(Prevalence ~ Habitat + Age + No_nestlings +  Sex + Temp_age + Year + laying_day +(1|Location/Territory),
+glmm_tricho_logit <- fitme(Prevalence ~ Habitat + Age + No_nestlings +  Sex + Temp_age + 
+                           Year + laying_day +(1|Location/Territory),
                            family = binomial(link = "logit"),
                            data = goshawk_urban,
                            method = "PQL/L")
 
-# assumptions checking
-
-# 1. Model structure
-# linearity
-sim_tricho <- simulateResiduals(glmm_tricho_logit) 
-plot(sim_tricho)
-testUniformity(sim_tricho)
-
-# multicollinearity
-cov2cor(vcov(glmm_tricho_logit))
-
-# 2. Error structure
-testTemporalAutocorrelation(sim_tricho, time = goshawk_urban$laying_day + ifelse(goshawk_urban$Year == "2015", 365, 0) + ifelse(goshawk_urban$Year == "2016", 730, 0))
-testSpatialAutocorrelation(sim_tricho,
-                           y = jitter(goshawk_urban$Latitude, factor = 0.001),
-                           x = jitter(goshawk_urban$Longitude, factor = 0.001))
-
-# test for overdispersion and zero inflation
-# not necessary for binary data!!
-
+# 0-model
 glmm_tricho_logit_0 <- fitme(Prevalence ~ 1 + (1|Location/Territory),
-                             family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L") 
+                             family = binomial(link = "logit"), 
+                             data = goshawk_urban, method = "PQL/L") 
 
 anova(glmm_tricho_logit, glmm_tricho_logit_0) 
 
@@ -829,113 +672,125 @@ anova(glmm_tricho_logit, glmm_tricho_logit_0)
 exp(glmm_tricho_logit$fixef["Habitaturban"])
 
 #test effects
-glmm_tricho_logit_noHabitat <- fitme(Prevalence ~  Age + No_nestlings + Sex + Temp_age + Year + laying_day + (1|Location/Territory),
-                                     family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noHabitat <- fitme(Prevalence ~  Age + No_nestlings + Sex + Temp_age + 
+                                     Year + laying_day + (1|Location/Territory),
+                                     family = binomial(link = "logit"), 
+                                     data = goshawk_urban, method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noHabitat)
 
-glmm_tricho_logit_nonest <- fitme(Prevalence ~ Habitat + Age + Sex + Temp_age + Year + laying_day + (1|Location/Territory),
-                                  family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_nonest <- fitme(Prevalence ~ Habitat + Age + Sex + Temp_age + Year + 
+                                  laying_day + (1|Location/Territory),
+                                  family = binomial(link = "logit"), 
+                                  data = goshawk_urban, method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_nonest)
 
-glmm_tricho_logit_noage <- fitme(Prevalence ~ Habitat + No_nestlings + Sex + Temp_age + Year + laying_day + (1|Location/Territory),
-                                 family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noage <- fitme(Prevalence ~ Habitat + No_nestlings + Sex + Temp_age + 
+                                 Year + laying_day + (1|Location/Territory),
+                                 family = binomial(link = "logit"), data = goshawk_urban, 
+                                 method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noage)
 
-glmm_tricho_logit_noTemp <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + Year + laying_day + (1|Location/Territory),
-                                  family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noTemp <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + 
+                                  Year + laying_day + (1|Location/Territory),
+                                  family = binomial(link = "logit"), data = goshawk_urban, 
+                                  method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noTemp)
 
-glmm_tricho_logit_noSex <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Year + laying_day + Temp_age + (1|Location/Territory),
-                                 family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noSex <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Year + 
+                                 laying_day + Temp_age + (1|Location/Territory),
+                                 family = binomial(link = "logit"), data = goshawk_urban, 
+                                 method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noSex)
 
-glmm_tricho_logit_noYear <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + Temp_age + laying_day + (1|Location/Territory),
-                                  family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noYear <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + 
+                                  Temp_age + laying_day + (1|Location/Territory),
+                                  family = binomial(link = "logit"), data = goshawk_urban, 
+                                  method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noYear)
 
-glmm_tricho_logit_noDay <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + Temp_age + Year + (1|Location/Territory),
-                                 family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_tricho_logit_noDay <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex + 
+                                 Temp_age + Year + (1|Location/Territory),
+                                 family = binomial(link = "logit"), data = goshawk_urban,
+                                 method = "PQL/L")
 anova(glmm_tricho_logit, glmm_tricho_logit_noDay)
 
 ### bootstraps
-anova(glmm_tricho_logit, glmm_tricho_logit_noHabitat, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_nonest, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_noage, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_noTemp, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_noSex, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = 1000, nb_cores = 3)
-anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = 1000, nb_cores = 3)
+anova(glmm_tricho_logit, glmm_tricho_logit_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_noage, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_noTemp, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_noSex, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
 ### clinical signs ##############
 
-glmm_clinical <- fitme(Clinical_binary ~ Habitat+Age+Sex+Year+laying_day+No_nestlings+Temp_age + (1|Location/Territory),
-                       family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day + 
+                       No_nestlings + Temp_age + (1|Location/Territory),
+                       family = binomial(link = "logit"), 
+                       data = goshawk_urban, method = "PQL/L")
+
+# 0-model
 glmm_0 <- fitme(Clinical_binary ~ 1 + (1|Location/Territory),
                 family = binomial(link = "logit"),
                 data = goshawk_urban, method = "PQL/L")
 anova(glmm_0, glmm_clinical)
 
-# assumptions checking
-
-# 1. Model structure
-# linearity
-sim_clinical <- simulateResiduals(glmm_clinical) 
-plot(sim_clinical)
-testUniformity(sim_clinical)
-
-# multicollinearity
-cov2cor(vcov(glmm_clinical))
-
-# 2. Error structure
-testTemporalAutocorrelation(sim_tricho, time = goshawk_urban$laying_day + ifelse(goshawk_urban$Year == "2015", 365, 0) + ifelse(goshawk_urban$Year == "2016", 730, 0))
-testSpatialAutocorrelation(sim_clinical,
-                           y = jitter(goshawk_urban$Latitude, factor = 0.001),
-                           x = jitter(goshawk_urban$Longitude, factor = 0.001))
-
-# test for overdispersion and zero inflation
-# not necessary for binary data!!
-
 # odds
 exp(glmm_clinical$fixef["Habitaturban"])
 
 #test effects
-glmm_clinical_noHabitat <- fitme(Clinical_binary ~  Age + No_nestlings + Sex + Year + laying_day + Temp_age + (1|Location/Territory),
-                                 family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noHabitat <- fitme(Clinical_binary ~  Age + No_nestlings + Sex + Year + 
+                                 laying_day + Temp_age + (1|Location/Territory),
+                                 family = binomial(link = "logit"), data = goshawk_urban, 
+                                 method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noHabitat)
 
-glmm_clinical_nonest <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day + Temp_age + (1|Location/Territory),
-                              family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_nonest <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day + 
+                              Temp_age + (1|Location/Territory),
+                              family = binomial(link = "logit"), data = goshawk_urban, 
+                              method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_nonest)
 
-glmm_clinical_noage <- fitme(Clinical_binary ~ Habitat + No_nestlings + Sex + Year + laying_day + Temp_age + (1|Location/Territory),
-                             family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noage <- fitme(Clinical_binary ~ Habitat + No_nestlings + Sex + Year + 
+                             laying_day + Temp_age + (1|Location/Territory),
+                             family = binomial(link = "logit"), data = goshawk_urban, 
+                             method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noage)
 
-glmm_clinical_noSex <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Year + laying_day + Temp_age + (1|Location/Territory),
-                             family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noSex <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Year + 
+                             laying_day + Temp_age + (1|Location/Territory),
+                             family = binomial(link = "logit"), data = goshawk_urban, 
+                             method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noSex)
 
-glmm_cinical_noTemp <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + Year + laying_day + (1|Location/Territory),
-                             family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noTemp <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + 
+                             Year + laying_day + (1|Location/Territory),
+                             family = binomial(link = "logit"), data = goshawk_urban, 
+                             method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noTemp)
 
-glmm_clinical_noYear <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + laying_day + Temp_age + (1|Location/Territory),
-                              family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noYear <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + 
+                              laying_day + Temp_age + (1|Location/Territory),
+                              family = binomial(link = "logit"), data = goshawk_urban, 
+                              method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noYear)
 
-glmm_clinical_noDay <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + Year + Temp_age + (1|Location/Territory),
-                             family = binomial(link = "logit"), data = goshawk_urban, method = "PQL/L")
+glmm_clinical_noDay <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Sex + Year + 
+                             Temp_age + (1|Location/Territory),
+                             family = binomial(link = "logit"), data = goshawk_urban, 
+                             method = "PQL/L")
 anova(glmm_clinical, glmm_clinical_noDay)
 
 ## bootstraps
-anova(glmm_clinical, glmm_clinical_noHabitat, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_nonest, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_noage, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_noSex, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_noTemp, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_noYear, boot.repl = 1000, nb_cores = 3)
-anova(glmm_clinical, glmm_clinical_noDay, boot.repl = 1000, nb_cores = 3)
+anova(glmm_clinical, glmm_clinical_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_noage, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_noSex, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_noTemp, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glmm_clinical, glmm_clinical_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
 #### predicitve plots clinical signs ######
 # subset urban/rural
@@ -1046,11 +901,10 @@ dev.off()
 ###### tricho######
 Todesursachen_Statistik <- read_excel("./source_data/goshawk_data_death.xlsx")
 
-death <- Todesursachen_Statistik[, c("age", "location", "Trichomonosiasis", "Cachexia",
-                                     "Trauma (window)", "Year", "sex")]
+death <- Todesursachen_Statistik[, c("age", "location", "Trichomonosiasis",
+                                     "Trauma (window)", "sex")]
 death$location <- as.factor(death$location)
 death$Trauma_window <- as.numeric(death$`Trauma (window)`)
-death$Year <- as.factor(death$Year)
 death$age <- as.factor(death$age)
 death$sex <- as.factor(death$sex)
 death <- as.data.frame(death)
@@ -1062,25 +916,6 @@ glm_death <- fitme(Trichomonosiasis ~ location + age + sex,
                    data = death,
                    method = "PQL/L")
 
-
-# assumptions checking
-
-# 1. Model structure
-
-# linearity
-sim_death <- simulateResiduals(glm_death) 
-plot(sim_death)
-testUniformity(sim_death)
-
-
-# multicollinearity
-cov2cor(vcov(glm_death))
-
-# 2. Error structure
-# no temporal or spatial autocorrelation to check for
-
-# test for overdispersion and zero inflation
-# not necessary for binary data!!
 
 # test againt zero model
 GLM_0 <- fitme(Trichomonosiasis ~ 1,
@@ -1115,9 +950,9 @@ anova(glm_death_no_sex, glm_death)
 exp(glm_death$fixef["locationUrban"]) 
 
 ## bootstraps
-anova(glm_death_no_loc, glm_death, boot.repl = 1000, nb_cores = 3)
-anova(glm_death_no_age, glm_death, boot.repl = 1000, nb_cores = 3)
-anova(glm_death_no_sex, glm_death, boot.repl = 1000, nb_cores = 3)
+anova(glm_death_no_loc, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 
 ####### window####
 
@@ -1127,37 +962,17 @@ glm_death2 <- fitme(Trauma_window ~ location + sex,
                     method = "PQL/L")
 
 
-# assumptions checking
-
-# 1. Model structure
-
-# linearity
-sim_death <- simulateResiduals(glm_death2) 
-plot(sim_death)
-testUniformity(sim_death)
-
-
-# multicollinearity
-cov2cor(vcov(glm_death))
-
-# 2. Error structure
-# no temporal or spatial autocorrelation to check for
-
-# test for overdispersion and zero inflation
-# not necessary for binary data!!
-
 # test againt zero model
-GLM_0 <- fitme(Trauma_window ~ 1,
+GLM_0_2 <- fitme(Trauma_window ~ 1,
              family = binomial(link = "logit"),
              data = death,
              method = "PQL/L")
-anova(GLM_0, glm_death2)
+anova(GLM_0_2, glm_death2)
 
 # Model output
 glm_death2
 
 # effects
-
 glm_death_no_loc2 <- fitme(Trauma_window ~  sex,
                            family = binomial(link = "logit"),
                            data = death,
@@ -1175,9 +990,8 @@ exp(glm_death2$fixef["locationUrban"])
 exp(glm_death2$fixef["sexm"]) 
 
 ## bootstraps
-
-anova(glm_death_no_loc2, glm_death2, boot.repl = 1000, nb_cores = 3)
-anova(glm_death_no_sex2, glm_death2, boot.repl = 1000, nb_cores = 3)
+anova(glm_death_no_loc2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
+anova(glm_death_no_sex2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
 ##### figure ###
