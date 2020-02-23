@@ -19,6 +19,12 @@ nb_cores <- 3
 
 ############################# behavioural flexibility #####################################################
 
+## age structure
+Age_test <- read_excel("./age.xlsx") # age youngest nestling rounded
+Age_test <- Age_test[, c("urban", "rural")]
+fisher.test(Age_test) 
+
+## behaviour model
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest1 <- subset(table_per_nest, Year == "2015" | Year == "2016")
