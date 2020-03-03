@@ -20,7 +20,7 @@ nb_cores <- 3
 ############################# behavioural flexibility #####################################################
 
 ## age structure
-Age_test <- read_excel("./age.xlsx") # age youngest nestling rounded
+Age_test <- read_excel("./source_data/age.xlsx") # age youngest nestling rounded
 Age_test <- Age_test[, c("urban", "rural")]
 fisher.test(Age_test) 
 
