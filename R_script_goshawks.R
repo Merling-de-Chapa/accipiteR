@@ -492,6 +492,8 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_core
 
 
 ########## reproductive output (number of nestlings) ############
+wilcox.test(No_nestlings ~ Habitat, data = goshawk_nest)
+
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
