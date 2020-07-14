@@ -191,7 +191,7 @@ ggsave(filename = "reaction_female_plot.pdf", width = 8, height =  7)
 
 # predicite barplot Habitat/Age
 
-pred_urban_young <- predict(test_no_int,
+pred_urban_young <- predict(test_react_int,
                             newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
                                                   Age = "young",
                                                   Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
@@ -203,32 +203,32 @@ pred_1 <- data.frame(pred = pred_urban_young, attr(pred_urban_young, "intervals"
                      Habitat = "urban", Age = "young")
 pred_1
 
-pred_urban_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
-                                                             Age = "old",
-                                                             Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
-                                                             No_nestlings = 3,
-                                                             Year = "2015",
-                                                             Habitat = "urban"),
+pred_urban_old <- predict(test_react_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
+                                                                Age = "old",
+                                                                Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
+                                                                No_nestlings = 3,
+                                                                Year = "2015",
+                                                                Habitat = "urban"),
                           re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
 pred_2 <- data.frame(pred = pred_urban_old, attr(pred_urban_old, "intervals"), 
                      Habitat = "urban", Age = "old")
 
-pred_rural_young <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
-                                                               Age = "young",
-                                                               Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
-                                                               No_nestlings = 3,
-                                                               Year = "2015",
-                                                               Habitat = "rural"),
+pred_rural_young <- predict(test_react_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
+                                                                  Age = "young",
+                                                                  Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
+                                                                  No_nestlings = 3,
+                                                                  Year = "2015",
+                                                                  Habitat = "rural"),
                             re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
 pred_3 <- data.frame(pred = pred_rural_young, attr(pred_rural_young, "intervals"), 
                      Habitat = "rural", Age = "young")
 
-pred_rural_old <- predict(test_no_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
-                                                             Age = "old",
-                                                             Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
-                                                             No_nestlings = 3,
-                                                             Year = "2015",
-                                                             Habitat = "rural"),
+pred_rural_old <- predict(test_react_int, newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
+                                                                Age = "old",
+                                                                Rainfall = median(goshawk_nest$Rainfall, na.rm = TRUE),
+                                                                No_nestlings = 3,
+                                                                Year = "2015",
+                                                                Habitat = "rural"),
                           re.form = NA, intervals = "predVar") # predVar = SD of Prediction^2
 pred_4 <- data.frame(pred = pred_rural_old, attr(pred_rural_old, "intervals"), 
                      Habitat = "rural", Age = "old")
@@ -492,10 +492,50 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_core
 
 
 ########## reproductive output (number of nestlings) ############
-wilcox.test(No_nestlings ~ Habitat, data = goshawk_nest)
-
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
+## Figure Number of nestlings per nest
+
+n_land <- nrow(table_per_nest[table_per_nest$Habitat == "rural", ])
+n_stadt <- nrow(table_per_nest[table_per_nest$Habitat == "urban", ])
+
+cut_off <- table_per_nest %>% 
+  group_by(No_nestlings, Habitat) %>%
+  summarise(n = n()) %>% 
+  mutate(n_total = ifelse(Habitat == "urban", n_land, n_stadt), 
+         prop = n / n_total) %>% 
+  ungroup()
+
+
+cut_off <- cut_off  %>% 
+  mutate(CI_lwr = map2_dbl(n, n_total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 5])), ## method exact
+         CI_upr = map2_dbl(n, n_total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## method exact
+
+
+cut_off$No_nestlings <- relevel(as.factor(cut_off$No_nestlings), ref = "1")
+cut_off$Habitat <- factor(cut_off$Habitat, levels = c("urban", "rural"))
+cut_off$Habitat <- relevel(as.factor(cut_off$Habitat), ref = "urban")
+
+ggplot(cut_off, aes(x = No_nestlings, y = prop, fill = Habitat, ymin = CI_lwr, ymax = CI_upr)) +
+  geom_bar(stat = "identity", position = position_dodge2(preserve = "single", width = 0.9), alpha = 0.8) +
+  geom_errorbar(position = position_dodge(preserve = "total", width = 0.9), width = 0) +
+  scale_fill_grey(labels = c("urban", "rural")) +
+  scale_y_continuous("Proportion") +
+  scale_x_discrete("Number of nestlings") +
+  geom_vline(xintercept = 2.5, linetype = 2) +
+  theme_bw() +
+  theme(panel.grid.minor = element_blank(), 
+        axis.text.x = element_text(angle = 0, hjust =  1), 
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) 
+
+ggsave(filename = "./nestlings_plot.pdf", width = 10, height =  7)
+
+## wilcox Number of nestlings
+wilcox.test(No_nestlings ~ Habitat, data = table_per_nest)
+
+
+##### GLMM
 goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
                                     "Territory", "Habitat", "Temp_breeding_begin")]
 goshawk_nest3$Year <- as.factor(goshawk_nest3$Year)
