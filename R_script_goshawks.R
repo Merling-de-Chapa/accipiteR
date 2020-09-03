@@ -16,13 +16,35 @@ spaMM.options(nb_cores = 3, separation_max = 1)
 boot.repl <- 1000
 nb_cores <- 3
 
+## map of study area
+rural <- data.frame(long = c(6.12954, 9.563227, 13.699830, 8.5324708), 
+                    lat = c(51.786726, 54.5239312, 52.857445, 52.0302285), 
+                    names = c('Kleve', 'Schleswig', 'Barnim', 'Bielefeld'), stringsAsFactors = FALSE)
+urban <- data.frame(long = c(13.413215, 6.958281, 9.993682), 
+                    lat = c(52.521918, 50.941278, 53.551085), 
+                    names = c('Berlin', 'Cologne', 'Hamburg'), stringsAsFactors = FALSE)
+
+germany<-map_data("worldHires", "Germany")
+Germ<-ggplot() + 
+  geom_polygon(data = germany, aes(x=long, y = lat, group = group), fill="white", color="black") +
+  coord_fixed(1.5)+
+  geom_point(data = rural, aes(x=long, y=lat), size = 3, shape = 17)+
+  geom_point(data = urban, aes(x=long, y=lat), size = 3,shape = 15)+ 
+  geom_text(data=rural, aes(x=long+0.1, y=lat+0.45, label=names, fontface=2), color='black', size=3) +
+  geom_text(data=urban, aes(x=long+0.1, y=lat-0.33, label=names, fontface=2), color='black', size=3) +
+  labs(x="Longitude")+ labs(y="Latitude") +
+  theme_light() +
+  theme(panel.grid.minor = element_blank())
+Germ
+ggsave(filename = "map_plot.pdf", width = 7, height = 10)
+
 
 ############################# behavioural flexibility #####################################################
 
 ## age structure
-Age_test <- read_excel("./source_data/age.xlsx") # age youngest nestling rounded
-Age_test <- Age_test[, c("urban", "rural")]
-fisher.test(Age_test) 
+#Age_test <- read_excel("./source_data/age.xlsx") # age youngest nestling rounded
+#Age_test <- Age_test[, c("urban", "rural")]
+#fisher.test(Age_test) 
 
 ## behaviour model
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
@@ -49,6 +71,13 @@ str(goshawk_nest)
 urban <- subset(goshawk_nest, Habitat == "urban")
 rural <- subset(goshawk_nest, Habitat == "rural")
 
+# median Age
+median(urban$Age_youngest)
+median(rural$Age_youngest)
+
+wilcox.test(Age_youngest ~ Habitat, data = table_per_nest)
+
+#GLMM
 test_react_int <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
                         Year + Rainfall + (1|Location/Territory),
                         family = binomial(link = "logit"), data = goshawk_nest, 
@@ -494,6 +523,9 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_core
 ########## reproductive output (number of nestlings) ############
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
+## wilcox Number of nestlings
+wilcox.test(No_nestlings ~ Habitat, data = table_per_nest)
+
 ## Figure Number of nestlings per nest
 
 n_land <- nrow(table_per_nest[table_per_nest$Habitat == "rural", ])
@@ -530,9 +562,6 @@ ggplot(cut_off, aes(x = No_nestlings, y = prop, fill = Habitat, ymin = CI_lwr, y
         panel.grid.minor.x = element_blank()) 
 
 ggsave(filename = "./nestlings_plot.pdf", width = 10, height =  7)
-
-## wilcox Number of nestlings
-wilcox.test(No_nestlings ~ Habitat, data = table_per_nest)
 
 
 ##### GLMM
@@ -676,6 +705,14 @@ goshawk_urban$Clinical_binary <- as.numeric(goshawk_urban$Clinical_binary)
 goshawk_urban <- as.data.frame(goshawk_urban)
 goshawk_urban <- droplevels(na.omit(goshawk_urban))
 str(goshawk_urban)
+
+# subset urban/rural
+urban2 <- subset(goshawk_urban, Habitat == "urban")
+rural2 <- subset(goshawk_urban, Habitat == "rural")
+
+# Median age
+median(urban2$Age)
+median(rural2$Age)
 
 #### figure prevalence ###
 ### plot rawdata
@@ -841,9 +878,6 @@ anova(glmm_clinical, glmm_clinical_noYear, boot.repl = boot.repl, nb_cores = nb_
 anova(glmm_clinical, glmm_clinical_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
 #### predicitve plots clinical signs ######
-# subset urban/rural
-urban2 <- subset(goshawk_urban, Habitat == "urban")
-rural2 <- subset(goshawk_urban, Habitat == "rural")
 
 # Laying day
 predictor_lay3 <- seq(min(goshawk_urban$laying_day, na.rm = TRUE),
@@ -1131,4 +1165,43 @@ ggplot(goshawk_imper, aes(x = Habitat, y = imperviousness2500)) +
   theme_bw() +
   ylab("\n Imperviousness (%) \n")
 ggsave(filename = "./figures/box_plot1.pdf", width = 8, height = 8)
+
+
+## Fig. SI2
+
+install.packages("vegan")
+library(vegan)
+
+Rupfungen_per_nest_aktuell <- read_excel("./source_data/rarefaction.xlsx")
+
+urban <- subset(Rupfungen_per_nest_aktuell, Habitat == "Urban")
+rural <- subset(Rupfungen_per_nest_aktuell, Habitat == "Rural")
+
+urban1 <-urban[-c(1,2,3)]
+rural1 <-rural[-c(1,2,3)]
+
+urban1 <-as.matrix(urban1)
+
+pdf(file = "./figures/Fig_SI2.pdf", width = 7, height = 5)
+
+par(las = 1, mar = c(5,4,1,1))
+plot(specaccum(rural1, 
+               method = "rarefaction"), 
+     ci.type = "polygon", col = "grey", xlim = c(0, 60), ci.lty = 0, xlab = "Territory", ylab = "Number of species")
+
+plot(specaccum(rural1, 
+               method = "rarefaction"), lwd = 2,
+     ci.type = "polygon", ci = 0, col = "black", add = TRUE)
+
+plot(specaccum(urban1, 
+               method = "rarefaction"), 
+     add = TRUE, ci.type = "polygon", col = "black", ci.lty = 0)
+
+plot(specaccum(urban1, 
+               method = "rarefaction"), lwd = 2, 
+     ci.type = "polygon", ci = 0, col = "white", add = TRUE)
+
+legend("bottomright", fill = c("grey", "black"), bty = "n", legend = c("rural", "urban"))
+
+dev.off()
 
