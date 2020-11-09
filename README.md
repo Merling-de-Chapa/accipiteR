@@ -28,4 +28,4 @@ The paper has been accepted in November 2020 for publication in **Royal Society 
 
 Please be kind and contact merling@izw-berlin.de if you want to use these data.
 
-This GitHub repository is distributed under the license CC-BY-SA-4.0 (see the licence file for details).
+This GitHub repository is distributed under the license CC-BY-SA-4.0 (see the license file for details).
