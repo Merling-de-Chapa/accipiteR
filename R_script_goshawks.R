@@ -24,15 +24,15 @@ urban <- data.frame(long = c(13.413215, 6.958281, 9.993682),
                     lat = c(52.521918, 50.941278, 53.551085), 
                     names = c('Berlin', 'Cologne', 'Hamburg'), stringsAsFactors = FALSE)
 
-germany<-map_data("worldHires", "Germany")
-Germ<-ggplot() + 
-  geom_polygon(data = germany, aes(x=long, y = lat, group = group), fill="white", color="black") +
-  coord_fixed(1.5)+
-  geom_point(data = rural, aes(x=long, y=lat), size = 3, shape = 17)+
-  geom_point(data = urban, aes(x=long, y=lat), size = 3,shape = 15)+ 
-  geom_text(data=rural, aes(x=long+0.1, y=lat+0.45, label=names, fontface=2), color='black', size=3) +
-  geom_text(data=urban, aes(x=long+0.1, y=lat-0.33, label=names, fontface=2), color='black', size=3) +
-  labs(x="Longitude")+ labs(y="Latitude") +
+germany <- map_data("worldHires", "Germany")
+Germ <- ggplot() + 
+  geom_polygon(data = germany, aes(x = long, y = lat, group = group), fill = "white", color = "black") +
+  coord_fixed(1.5) +
+  geom_point(data = rural, aes(x = long, y = lat), size = 3, shape = 17) +
+  geom_point(data = urban, aes(x = long, y = lat), size = 3,shape = 15) + 
+  geom_text(data = rural, aes(x = long + 0.1, y = lat + 0.45, label = names, fontface = 2), color = 'black', size = 3) +
+  geom_text(data = urban, aes(x = long + 0.1, y = lat - 0.33, label = names, fontface = 2), color = 'black', size = 3) +
+  labs(x = "Longitude") + labs(y = "Latitude") +
   theme_light() +
   theme(panel.grid.minor = element_blank())
 Germ
@@ -181,7 +181,7 @@ test_no_Age <- fitme(reaction ~ Habitat + No_nestlings + Laying_begin_day + Year
                      method = "PQL/L")
 
 
-anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores =nb_cores)
+anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(test_no_int, test_no_Age, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(test_no_int, test_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 
@@ -1108,7 +1108,7 @@ data_plot2 <- Todesursachen_Statistik %>%
          CI_upr = map2_dbl(n, total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## method exact
 
 
-ggplot(data_plot2, aes(y = prop, x = Cause_of_death, fill = location, ymin = CI_lwr, ymax = CI_upr))+ 
+ggplot(data_plot2, aes(y = prop, x = Cause_of_death, fill = location, ymin = CI_lwr, ymax = CI_upr)) + 
   geom_bar(stat = "identity", position =  position_dodge2(width = 0.9, preserve = "single"), alpha = 0.8) +
   geom_errorbar(width = 0, position = position_dodge(width = 0.9, preserve = "total")) +
   scale_fill_grey("Habitat", 
@@ -1177,10 +1177,10 @@ Rupfungen_per_nest_aktuell <- read_excel("./source_data/rarefaction.xlsx")
 urban <- subset(Rupfungen_per_nest_aktuell, Habitat == "Urban")
 rural <- subset(Rupfungen_per_nest_aktuell, Habitat == "Rural")
 
-urban1 <-urban[-c(1,2,3)]
-rural1 <-rural[-c(1,2,3)]
+urban1 <- urban[-c(1,2,3)]
+rural1 <- rural[-c(1,2,3)]
 
-urban1 <-as.matrix(urban1)
+urban1 <- as.matrix(urban1)
 
 pdf(file = "./figures/Fig_SI2.pdf", width = 7, height = 5)
 
