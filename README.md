@@ -4,9 +4,9 @@ This is the github repository providing the data and source code associated with
 
 ***Phantom of the forest or successful citizen? Analysing how Northern goshawks (Accipiter gentilis) cope with the urban environment***
 
-by (in the order of authorship):
+<img src="https://github.com/courtiol/accipiteR/raw/master/chick.jpg" alt="Goshawk chick" align="right" width="350">
 
-<img src="https://github.com/courtiol/accipiteR/raw/master/chick.jpg" alt="Goshawk chick" align="right" width="400">
+by (in the order of authorship):
 
 - Manuela Merling de Chapa
 - Alexandre Courtiol
