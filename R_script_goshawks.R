@@ -1136,3 +1136,52 @@ legend("bottomright", fill = c("grey", "black"), bty = "n", legend = c("rural", 
 
 dev.off()
 
+
+
+### INFORMATION ON THE SESSION ###
+sessionInfo()
+# R version 4.0.3 (2020-10-10)
+# Platform: x86_64-apple-darwin17.0 (64-bit)
+# Running under: macOS Catalina 10.15.7
+# 
+# Matrix products: default
+# BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+# 
+# locale:
+#   [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+# 
+# attached base packages:
+#   [1] stats     graphics  grDevices utils     datasets  methods   base     
+# 
+# other attached packages:
+#   [1] vegan_2.5-6        lattice_0.20-41    permute_0.9-5      doSNOW_1.0.19      snow_0.4-3        
+# [6] iterators_1.0.13   foreach_1.5.1      mapdata_2.3.0      maps_3.3.0         ggplot2_3.3.2     
+# [11] binom_1.1-1        purrr_0.3.4        car_3.0-10         carData_3.0-4      DHARMa_0.3.3.0    
+# [16] readxl_1.3.1       dplyr_1.0.2        MASS_7.3-53        glmmTMB_1.0.2.9000 rstanarm_2.21.1   
+# [21] Rcpp_1.0.5         lme4_1.1-25        Matrix_1.2-18      spaMM_3.5.2       
+# 
+# loaded via a namespace (and not attached):
+#   [1] plyr_1.8.6            igraph_1.2.6          TMB_1.7.18            splines_4.0.3         crosstalk_1.1.0.1    
+# [6] TH.data_1.0-10        rstantools_2.1.1      inline_0.3.16         digest_0.6.27         htmltools_0.5.0      
+# [11] rsconnect_0.8.16      fansi_0.4.1           magrittr_1.5          cluster_2.1.0         openxlsx_4.2.3       
+# [16] RcppParallel_5.0.2    matrixStats_0.57.0    xts_0.12.1            sandwich_3.0-0        prettyunits_1.1.1    
+# [21] colorspace_2.0-0      haven_2.3.1           callr_3.5.1           crayon_1.3.4          jsonlite_1.7.1       
+# [26] Rglpk_0.6-4           survival_3.2-7        zoo_1.8-8             glue_1.4.2            registry_0.5-1       
+# [31] gtable_0.3.0          emmeans_1.5.2-1       V8_3.4.0              pkgbuild_1.1.0        rstan_2.21.2         
+# [36] abind_1.4-5           scales_1.1.1          mvtnorm_1.1-1         miniUI_0.1.1.1        xtable_1.8-4         
+# [41] foreign_0.8-80        proxy_0.4-24          stats4_4.0.3          StanHeaders_2.21.0-6  DT_0.16              
+# [46] htmlwidgets_1.5.2     threejs_0.3.3         ellipsis_0.3.1        farver_2.0.3          pkgconfig_2.0.3      
+# [51] loo_2.3.1             labeling_0.4.2        tidyselect_1.1.0      rlang_0.4.8           reshape2_1.4.4       
+# [56] later_1.1.0.1         munsell_0.5.0         cellranger_1.1.0      tools_4.0.3           cli_2.1.0            
+# [61] generics_0.1.0        ROI.plugin.glpk_1.0-0 ggridges_0.5.2        stringr_1.4.0         fastmap_1.0.1        
+# [66] yaml_2.2.1            processx_3.4.4        zip_2.1.1             pbapply_1.4-3         nlme_3.1-150         
+# [71] mime_0.9              slam_0.1-47           ROI_1.0-0             compiler_4.0.3        bayesplot_1.7.2      
+# [76] shinythemes_1.1.2     rstudioapi_0.12       curl_4.3              tibble_3.0.4          statmod_1.4.35       
+# [81] stringi_1.5.3         ps_1.4.0              forcats_0.5.0         nloptr_1.2.2.2        markdown_1.1         
+# [86] shinyjs_2.0.0         vctrs_0.3.4           pillar_1.4.6          lifecycle_0.2.0       estimability_1.3     
+# [91] data.table_1.13.2     httpuv_1.5.4          R6_2.5.0              promises_1.1.1        gridExtra_2.3        
+# [96] rio_0.5.16            codetools_0.2-18      boot_1.3-25           colourpicker_1.1.0    gtools_3.8.2         
+# [101] assertthat_0.2.1      withr_2.3.0           shinystan_2.5.0       multcomp_1.4-14       mgcv_1.8-33          
+# [106] parallel_4.0.3        hms_0.5.3             grid_4.0.3            coda_0.19-4           minqa_1.2.4          
+# [111] numDeriv_2016.8-1.1   shiny_1.5.0           base64enc_0.1-3       dygraphs_1.1.1.6-1
