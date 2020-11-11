@@ -328,7 +328,7 @@ dev.off()
 ###################### Diet composition ####################################################################
 ##### figure
 
-Rupfungen_gesamt <- read_excel("./source_data/Goshawk_data_diet_plot.xlsx")
+Rupfungen_gesamt <- read_excel("./source_data/goshawk_data_diet_plot.xlsx")
 n_land <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Land", ])
 n_stadt <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Stadt", ])
 
@@ -690,7 +690,7 @@ anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores 
 ###################### Health status of goshawk nestlings ####################################
 
 #### prevalence ####
-Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./source_data/Goshawk_data_nestlings.xlsx")
+Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./source_data/goshawk_data_nestlings.xlsx")
 
 
 goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location","No_nestlings", "Sex", 
