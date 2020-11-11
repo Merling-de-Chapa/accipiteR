@@ -6,6 +6,8 @@ This is the github repository providing the data and source code associated with
 
 by (in the order of authorship):
 
+<img src="https://github.com/courtiol/accipiteR/raw/master/chick.jpg" alt="Goshawk chick" align="right" width="200">
+
 - Manuela Merling de Chapa
 - Alexandre Courtiol
 - Marc Engler
