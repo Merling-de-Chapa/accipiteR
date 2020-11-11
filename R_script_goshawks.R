@@ -70,7 +70,14 @@ rural <- subset(goshawk_nest, Habitat == "rural")
 
 # median Age
 median(urban$Age_youngest)
+# 21
 median(rural$Age_youngest)
+# 20
+
+nrow(urban)
+# 77
+nrow(rural)
+# 74
 
 wilcox.test(Age_youngest ~ Habitat, data = table_per_nest)
 # Wilcoxon rank sum test with continuity correction
@@ -152,6 +159,10 @@ anova(test_react_int, test_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(test_react_int, test_noRain, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
 
+## Odds ratio for Year effect
+exp(fixef(test_react_int)["Year2016"])
+
+
 ##### test without interaction ###############
 
 test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day + 
@@ -160,7 +171,9 @@ test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day 
                      method = "PQL/L")
 round(exp(fixef(test_no_int)["Habitaturban"]), 2)
 # Habitaturban (Odds-ratio)
-# 21.68 
+# 21.68
+CI_behaviour <- confint(test_no_int, "Habitaturban")
+exp(CI_behaviour$interval)
 
 test_no_Habitat <- fitme(reaction ~ Age + No_nestlings + Laying_begin_day + Year + 
                          Rainfall + (1|Location/Territory),
@@ -190,7 +203,6 @@ plot_data <- goshawk_nest %>%
          prop = n/total, 
          CI_lwr = map2_dbl(n, total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 5])), ## method exact
          CI_upr = map2_dbl(n, total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## method exact
-
 
 plot_data$reaction_female <- relevel(plot_data$reaction_female, ref = "no reaction")
 plot_data$Habitat <- relevel(plot_data$Habitat, ref = "urban")
@@ -371,12 +383,20 @@ GLMM_pigeon_spaMM_loc <- fitme(cbind(Pigeon, Rest)~Habitat + (1|Location/nest_si
                                data = pigeon,
                                method = "PQL/L")
 
+GLMM_0_loc <- fitme(cbind(Pigeon, Rest)~ 1 + (1|Location/nest_side),
+                    family = binomial(link = "logit"),
+                    data = pigeon,
+                    method = "PQL/L")
+
 # prediction
 Odds_ratio <- exp(GLMM_pigeon_spaMM_loc$fixef["HabitatUrban"])
 Odds_ratio
 # HabitatUrban 
-# 3.637754 
-
+# 3.637754
+CI_diet <- confint(GLMM_pigeon_spaMM_loc, "HabitatUrban")
+exp(CI_diet$interval)
+# lower HabitatUrban upper HabitatUrban 
+# 2.436699           5.281086 
 
 #### bootstrap ###
 anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
@@ -458,7 +478,8 @@ predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")),
 diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")),
              re.form = NA))
 # Point predictions:
-# 1.439895 
+# 1.439895
+
 
 #### bootstrap 
 anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -483,7 +504,11 @@ lmm_laying2 <- fitme(Laying_begin_day ~ Habitat + Temp_breeding_begin  +
 # odds
 lmm_laying2$fixef["Habitaturban"] 
 # Habitaturban 
-# -12.49214 
+# -12.49214
+CI_laying <- confint(lmm_laying2, "Habitaturban")
+CI_laying
+#lower Habitaturban upper Habitaturban 
+#-17.365852          -7.121119
 
 ### test  effects
 lmm_laying_no_Habitat <- fitme(Laying_begin_day ~ Temp_breeding_begin + 
@@ -629,7 +654,9 @@ glmm_nestlings2 <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin +
 # Odd
 exp(glmm_nestlings2$fixef["Habitaturban"])
 # Habitaturban 
-# 2.217902 
+# 2.217902
+CI_nestlings <- confint(glmm_nestlings2, "Habitaturban")
+exp(CI_nestlings$interval)
 
 #### testing effects########
 glmm_nestlings_no_Habitat2 <- fitme(No_nestlings_binary ~ Temp_breeding_begin + 
@@ -708,7 +735,9 @@ glmm_tricho_logit <- fitme(Prevalence ~ Habitat + Age + No_nestlings +  Sex + Te
 # odds
 exp(glmm_tricho_logit$fixef["Habitaturban"])
 # Habitaturban 
-# 2.833019 
+# 2.833019
+CI_tricho <- confint(glmm_tricho_logit, "Habitaturban")
+exp(CI_tricho$interval)
 
 #test effects
 glmm_tricho_logit_noHabitat <- fitme(Prevalence ~  Age + No_nestlings + Sex + Temp_age + 
@@ -767,6 +796,8 @@ glmm_clinical <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day
 exp(glmm_clinical$fixef["Habitaturban"])
 # Habitaturban 
 # 10.89108 
+CI_clinical <- confint(glmm_clinical, "Habitaturban")
+exp(CI_clinical$interval)
 
 #test effects
 glmm_clinical_noHabitat <- fitme(Clinical_binary ~  Age + No_nestlings + Sex + Year + 
@@ -933,6 +964,10 @@ glm_death <- fitme(Trichomonosiasis ~ location + age + sex,
                    data = death,
                    method = "PQL/L")
 
+glm_death_GLM <- glm(Trichomonosiasis ~ location + age + sex,
+                     family = binomial(link = "logit"),
+                     data = death)
+
 # effects
 glm_death_no_loc <- fitme(Trichomonosiasis ~ age + sex,
                           family = binomial(link = "logit"),
@@ -952,6 +987,11 @@ glm_death_no_sex <- fitme(Trichomonosiasis ~ location + age,
 exp(glm_death$fixef["locationUrban"]) 
 # locationUrban 
 # 5.145808
+CI_death <- confint(glm_death_GLM, parm = "locationUrban")
+exp(CI_death)
+# 2.5 %    97.5 % 
+# 1.075153 43.764468 
+
 
 ## bootstraps
 anova(glm_death_no_loc, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -964,6 +1004,10 @@ glm_death2 <- fitme(Trauma_window ~ location + sex,
                     family = binomial(link = "logit"),
                     data = death,
                     method = "PQL/L")
+
+glm_death2_GLM <- glm(Trauma_window ~ location + sex,
+                    family = binomial(link = "logit"),
+                    data = death)
 
 # effects
 glm_death_no_loc2 <- fitme(Trauma_window ~  sex,
@@ -979,11 +1023,19 @@ glm_death_no_sex2 <- fitme(Trauma_window ~ location,
 # odds ratio
 exp(glm_death2$fixef["locationUrban"]) 
 # locationUrban 
-# 3.537027 
+# 3.537027
+CI_death2loc <- confint(glm_death2_GLM, "locationUrban")
+exp(CI_death2loc)
+# 2.5 %   97.5 % 
+# 1.388356 10.932307 
 
 exp(glm_death2$fixef["sexm"]) 
 # sexm 
 # 2.311387
+CI_death2sex <- confint(glm_death2_GLM, "sexm")
+exp(CI_death2sex)
+# 2.5 %    97.5 % 
+# 1.194481 4.600079 
 
 ## bootstraps
 anova(glm_death_no_loc2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
