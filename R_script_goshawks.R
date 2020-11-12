@@ -14,6 +14,7 @@ library(dplyr)
 library(doSNOW)
 library(vegan)
 
+set.seed(123L)
 spaMM.options(nb_cores = 3, separation_max = 1)
 boot.repl <- 1000 ## put 0 for not parametric bootstrap!
 nb_cores <- 3
@@ -153,11 +154,64 @@ odd_ratio_rural_young_vs_rural_old # [1] 6.24
 
 #### bootstrap to get p-values of each effect
 anova(test_react_int, test_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1907.8 s.
+# chi2_LR df     p_value
+# p_v 12.26368  2 0.002172577
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.016
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 9.145138  2 0.01033138
+
 anova(test_react_int, test_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 3288.4 s.
+# chi2_LR df   p_value
+# p_v 1.036544  1 0.3086266
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.337
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.8949581  1 0.3441372
+
 anova(test_react_int, test_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2801.6 s.
+# chi2_LR df    p_value
+# p_v 8.014984  1 0.00463919
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.011
+# Bartlett-corrected LR test:
+#   chi2_LR df     p_value
+# p_v 7.454125  1 0.006329123
+
 anova(test_react_int, test_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2297.4 s.
+# chi2_LR df    p_value
+# p_v 4.940328  1 0.02623706
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.03
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 4.569614  1 0.0325439
+
 anova(test_react_int, test_noRain, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1967.2 s.
+# chi2_LR df   p_value
+# p_v 0.6995435  1 0.4029371
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.427
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.6404846  1 0.4235354
+
 anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2387 s.
+# chi2_LR df    p_value
+# p_v 5.979197  2 0.05030763
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.0829
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 4.970473  2 0.08330584
 
 ## Odds ratio for Year effect
 exp(fixef(test_react_int)["Year2016"])
@@ -186,8 +240,34 @@ test_no_Age <- fitme(reaction ~ Habitat + No_nestlings + Laying_begin_day + Year
                      method = "PQL/L")
 
 anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2789.7 s.
+# chi2_LR df   p_value
+# p_v 0.2841157  1 0.5940163
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.736
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.2414185  1 0.6231834
+
 anova(test_no_int, test_no_Age, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2018.7 s.
+# chi2_LR df    p_value
+# p_v 5.695081  1 0.01701252
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.015
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 5.587429  1 0.01808983
+
 anova(test_no_int, test_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1943.1 s.
+# chi2_LR df      p_value
+# p_v 11.97957  1 0.0005378708
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.005
+# Bartlett-corrected LR test:
+#   chi2_LR df     p_value
+# p_v 7.658944  1 0.005649156
 
 #### figures #####################
 #### barplot raw data
@@ -399,7 +479,9 @@ exp(CI_diet$interval)
 # 2.436699           5.281086 
 
 #### bootstrap ###
+set.seed(1)
 anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
+
 
 ############ diversity ######################
 
