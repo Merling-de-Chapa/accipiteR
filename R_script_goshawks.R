@@ -18,7 +18,8 @@ spaMM.options(nb_cores = 3, separation_max = 1)
 boot.repl <- 1000 ## put 0 for not parametric bootstrap!
 nb_cores <- 3
 
-## map of study area
+
+## Map of study area  ###############
 rural <- data.frame(long = c(6.12954, 9.563227, 13.699830, 8.5324708), 
                     lat = c(51.786726, 54.5239312, 52.857445, 52.0302285), 
                     names = c('Kleve', 'Schleswig', 'Barnim', 'Bielefeld'), stringsAsFactors = FALSE)
@@ -41,7 +42,7 @@ Germ
 ggsave(filename = "./figures/figure1.pdf", width = 7, height = 10)
 
 
-# behavioural responses #####################################################
+# Behavioural responses #####################################################
 
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
@@ -85,7 +86,9 @@ wilcox.test(Age_youngest ~ Habitat, data = table_per_nest)
 # W = 4315.5, p-value = 0.2681
 # alternative hypothesis: true location shift is not equal to 0
 
-## model  behaviour
+
+### behaviour model  ###############
+
 ### test effects
 test_react_int <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
                         Year + Rainfall + (1|Location/Territory),
@@ -155,7 +158,7 @@ anova(test_react_int, test_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores
 # bootstrap took 1907.8 s.
 # chi2_LR df     p_value
 # p_v 12.26368  2 0.002172577
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.016
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
@@ -165,7 +168,7 @@ anova(test_react_int, test_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 3288.4 s.
 # chi2_LR df   p_value
 # p_v 1.036544  1 0.3086266
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.337
 # Bartlett-corrected LR test:
 #   chi2_LR df   p_value
@@ -175,7 +178,7 @@ anova(test_react_int, test_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2801.6 s.
 # chi2_LR df    p_value
 # p_v 8.014984  1 0.00463919
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.011
 # Bartlett-corrected LR test:
 #   chi2_LR df     p_value
@@ -185,7 +188,7 @@ anova(test_react_int, test_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2297.4 s.
 # chi2_LR df    p_value
 # p_v 4.940328  1 0.02623706
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.03
 # Bartlett-corrected LR test:
 #   chi2_LR df   p_value
@@ -195,7 +198,7 @@ anova(test_react_int, test_noRain, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 1967.2 s.
 # chi2_LR df   p_value
 # p_v 0.6995435  1 0.4029371
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.427
 # Bartlett-corrected LR test:
 #   chi2_LR df   p_value
@@ -205,7 +208,7 @@ anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2387 s.
 # chi2_LR df    p_value
 # p_v 5.979197  2 0.05030763
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.0829
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
@@ -215,7 +218,7 @@ anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
 exp(fixef(test_react_int)["Year2016"])
 
 
-## behaviour model without interaction ###############
+### behaviour model without interaction ###############
 test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day + 
                      Year + Rainfall + (1|Location/Territory),
                      family = binomial(link = "logit"), data = goshawk_nest, 
@@ -244,7 +247,7 @@ anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2789.7 s.
 # chi2_LR df   p_value
 # p_v 0.2841157  1 0.5940163
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.736
 # Bartlett-corrected LR test:
 #   chi2_LR df   p_value
@@ -254,7 +257,7 @@ anova(test_no_int, test_no_Age, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2018.7 s.
 # chi2_LR df    p_value
 # p_v 5.695081  1 0.01701252
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.015
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
@@ -264,7 +267,7 @@ anova(test_no_int, test_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 1943.1 s.
 # chi2_LR df      p_value
 # p_v 11.97957  1 0.0005378708
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.005
 # Bartlett-corrected LR test:
 #   chi2_LR df     p_value
@@ -443,7 +446,7 @@ ggplot(cut_off2, aes(x = species, y = prop, fill = Habitat, ymin = CI_lwr, ymax 
 
 ggsave(filename = "./figures/figure5.pdf", width = 10, height =  7)
 
-## pigeons ###################
+### pigeons ###################
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
 pigeon <- Rupfungen_per_nest_aktuell[, c("Location", "nest_side", "Habitat",
@@ -479,13 +482,13 @@ anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_co
 # bootstrap took 241.8 s.
 # chi2_LR df     p_value
 # p_v 10.16658  1 0.001430096
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.015
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
 # p_v 5.998557  1 0.01431759
 
-## diversity ###########################
+### diversity ###########################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
@@ -531,14 +534,14 @@ anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = boot.repl, nb_cores 
 # bootstrap took 107.7 s.
 # chi2_LR df     p_value
 # p_v 8.929882  1 0.002805424
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.00799
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
 # p_v 6.12485  1 0.01332946
 
 
-## species richness ####################################
+### species richness ####################################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
@@ -577,7 +580,7 @@ anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores
 # bootstrap took 302.7 s.
 # chi2_LR df    p_value
 # p_v 5.53247  1 0.01866674
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.03
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
@@ -623,7 +626,7 @@ anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_c
 # bootstrap took 559.1 s.
 # chi2_LR df      p_value
 # p_v 11.33817  1 0.0007592998
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.00899
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
@@ -633,14 +636,14 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_core
 # bootstrap took 465.8 s.
 # chi2_LR df   p_value
 # p_v 1.613375  1 0.2040181
-# ======== Bootstrap: ========
+# Bootstrap results -
 #   Raw simulated p-value: 0.221
 # Bartlett-corrected LR test:
 #   chi2_LR df   p_value
 # p_v 1.460426  1 0.2268624
 
 
-## reproductive output (brood size) ############
+### reproductive output (brood size) ############
 
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
@@ -687,7 +690,7 @@ ggplot(cut_off, aes(x = No_nestlings, y = prop, fill = Habitat, ymin = CI_lwr, y
 
 ggsave(filename = "./figures/figure6.pdf", width = 10, height = 7)
 
-## model brood size ######
+### model brood size ######
 
 goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
                                     "Territory", "Habitat", "Temp_breeding_begin")]
@@ -766,7 +769,7 @@ axis(1, at = seq(60,120, by = 10), labels = labelist)
 axis(2, las = 2)
 dev.off()
 
-## brood size model without laying start ################
+### brood size model without laying start ################
 glmm_nestlings2 <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + 
                         (1|Location/Territory), family = binomial(link = "logit"),
                          data = goshawk_nest3, method = "PQL/L")
@@ -796,7 +799,7 @@ anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores 
 
 #Health status of goshawk nestlings ####################################
 
-## prevalence ####
+### prevalence ####
 Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./source_data/goshawk_data_nestlings.xlsx")
 
 goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location","No_nestlings", "Sex", 
@@ -906,7 +909,7 @@ anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = boot.repl, nb_cor
 anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-## model clinical signs ##############
+### model clinical signs ##############
 
 glmm_clinical <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day + 
                        No_nestlings + Temp_age + (1|Location/Territory),
@@ -1070,7 +1073,7 @@ dev.off()
 
 # Causes of mortality ############################################################
 
-## model trichomonosis ######
+### model trichomonosis ######
 
 Todesursachen_Statistik <- read_excel("./source_data/goshawk_data_death.xlsx")
 
@@ -1123,7 +1126,7 @@ anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-## model Trauma window collision ####
+### model Trauma window collision ####
 
 glm_death2 <- fitme(Trauma_window ~ location + sex,
                     family = binomial(link = "logit"),
