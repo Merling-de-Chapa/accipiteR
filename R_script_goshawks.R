@@ -41,9 +41,8 @@ Germ
 ggsave(filename = "./figures/figure1.pdf", width = 7, height = 10)
 
 
-############################# behavioural flexibility #####################################################
+# behavioural responses #####################################################
 
-## behaviour model
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest1 <- subset(table_per_nest, Year == "2015" | Year == "2016")
@@ -64,11 +63,10 @@ goshawk_nest$Age <- as.factor(goshawk_nest$Age)
 
 str(goshawk_nest)
 
-# subset Urban/Rural
 urban <- subset(goshawk_nest, Habitat == "urban")
 rural <- subset(goshawk_nest, Habitat == "rural")
 
-# median Age
+### median Age
 median(urban$Age_youngest)
 # 21
 median(rural$Age_youngest)
@@ -79,6 +77,7 @@ nrow(urban)
 nrow(rural)
 # 74
 
+### wilcox age ##
 wilcox.test(Age_youngest ~ Habitat, data = table_per_nest)
 # Wilcoxon rank sum test with continuity correction
 # 
@@ -86,7 +85,8 @@ wilcox.test(Age_youngest ~ Habitat, data = table_per_nest)
 # W = 4315.5, p-value = 0.2681
 # alternative hypothesis: true location shift is not equal to 0
 
-#GLMM
+## model  behaviour
+### test effects
 test_react_int <- fitme(reaction ~ Habitat*Age + No_nestlings + Laying_begin_day + 
                         Year + Rainfall + (1|Location/Territory),
                         family = binomial(link = "logit"), data = goshawk_nest, 
@@ -124,9 +124,7 @@ test_noYoung <- fitme(reaction ~ Habitat + Rainfall + No_nestlings +
                       family = binomial(link = "logit"), data = goshawk_nest, 
                       method = "PQL/L")
 
-#### Habitat
-
-## Odds_ratioS 
+### Odds ratioS 
 rural_young <- data.frame(Habitat = "rural", Age = "young", No_nestlings = 0, Laying_begin_day = 0,
                           Year = "2015", Rainfall = 0, Location = "new", Territory = "new") 
 urban_young <- data.frame(Habitat = "urban", Age = "young", No_nestlings = 0, Laying_begin_day = 0,
@@ -151,7 +149,7 @@ odd_ratio_urban_young_vs_urban_old # [1] 2.87
 odd_ratio_rural_young_vs_rural_old <- round(OR(prob_rural_young, prob_rural_old), 2)
 odd_ratio_rural_young_vs_rural_old # [1] 6.24
 
-#### bootstrap to get p-values of each effect
+### bootstrap to get p-values of each effect
 set.seed(123L)
 anova(test_react_int, test_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 1907.8 s.
@@ -213,22 +211,24 @@ anova(test_react_int, test_noYoung, boot.repl = boot.repl, nb_cores = nb_cores)
 #   chi2_LR df    p_value
 # p_v 4.970473  2 0.08330584
 
-## Odds ratio for Year effect
+### Odds ratio for Year effect
 exp(fixef(test_react_int)["Year2016"])
 
 
-##### test without interaction ###############
-
+## behaviour model without interaction ###############
 test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day + 
                      Year + Rainfall + (1|Location/Territory),
                      family = binomial(link = "logit"), data = goshawk_nest, 
                      method = "PQL/L")
+
+### odds ration
 round(exp(fixef(test_no_int)["Habitaturban"]), 2)
 # Habitaturban (Odds-ratio)
 # 21.68
 CI_behaviour <- confint(test_no_int, "Habitaturban")
 exp(CI_behaviour$interval)
 
+### test effects
 test_no_Habitat <- fitme(reaction ~ Age + No_nestlings + Laying_begin_day + Year + 
                          Rainfall + (1|Location/Territory),
                          family = binomial(link = "logit"), data = goshawk_nest, 
@@ -239,6 +239,7 @@ test_no_Age <- fitme(reaction ~ Habitat + No_nestlings + Laying_begin_day + Year
                      family = binomial(link = "logit"), data = goshawk_nest, 
                      method = "PQL/L")
 
+### bootstraps
 anova(test_react_int, test_no_int, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 2789.7 s.
 # chi2_LR df   p_value
@@ -269,9 +270,8 @@ anova(test_no_int, test_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 #   chi2_LR df     p_value
 # p_v 7.658944  1 0.005649156
 
-#### figures #####################
+### figures #####################
 #### barplot raw data
-
 total_rural <- nrow(goshawk_nest[goshawk_nest$Habitat  == "rural", ])
 total_urban <- nrow(goshawk_nest[goshawk_nest$Habitat  == "urban", ])
 
@@ -298,9 +298,7 @@ ggplot(plot_data, aes(x = reaction_female, y = prop, fill = Habitat, ymin = CI_l
 
 ggsave(filename = "./figures/figure2.pdf", width = 8, height =  7)
 
-
-# barplot predictions Habitat/Age
-
+#### barplot predictions Habitat/Age
 pred_urban_young <- predict(test_react_int,
                             newdata = expand.grid(Laying_begin_day = median(goshawk_nest$Laying_begin_day, na.rm = TRUE),
                                                   Age = "young",
@@ -358,8 +356,7 @@ ggplot(pred_Habitat_age, aes(x = Age, y = pred, fill = Habitat, ymin = predVar_0
 
 ggsave(filename = "./figures/figure3.pdf", width = 8, height =  7)
 
-# plot predictions laying
-
+#### plot prediction laying
 predictor_lay <- seq(min(goshawk_nest$Laying_begin_day, na.rm = TRUE), max(goshawk_nest$Laying_begin_day, na.rm = TRUE), length = 30)
 pred_lay_obj <- predict(test_no_int,
                         newdata = expand.grid(Laying_begin_day = predictor_lay,
@@ -404,9 +401,9 @@ axis(1, at = seq(60,120, by = 10), labels = labelist)
 axis(2, las = 2)
 dev.off()
 
-###################### Diet composition ####################################################################
-##### figure
+# Diet composition ####################################################################
 
+## figure raw data
 Rupfungen_gesamt <- read_excel("./source_data/goshawk_data_diet_plot.xlsx")
 n_land <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Land", ])
 n_stadt <- nrow(Rupfungen_gesamt[Rupfungen_gesamt$Habitat == "Stadt", ])
@@ -418,14 +415,12 @@ cut_off <- Rupfungen_gesamt %>%
          prop = n / n_total) %>% 
   ungroup()
 
-### table with all species even < 1%
 cut_off <- cut_off  %>% 
   mutate(CI_lwr = map2_dbl(n, n_total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 5])), ## method exact
-         CI_upr = map2_dbl(n, n_total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## method exact
+         CI_upr = map2_dbl(n, n_total, ~ as.numeric(binom.confint( x = .x, n = .y)[5, 6]))) ## table with all species even < 1%
 
-## filter to keep only species > 1%
 cut_off2 <- cut_off %>% 
-  filter(prop > 0.01)
+  filter(prop > 0.01) ## filter to keep only species > 1%
 
 cut_off2$species <- relevel(as.factor(cut_off2$species), ref = "Feral pigeon")
 cut_off2$species  <- factor(cut_off2$species,
@@ -448,7 +443,7 @@ ggplot(cut_off2, aes(x = species, y = prop, fill = Habitat, ymin = CI_lwr, ymax 
 
 ggsave(filename = "./figures/figure5.pdf", width = 10, height =  7)
 
-########## pigeons ###################
+## pigeons ###################
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
 pigeon <- Rupfungen_per_nest_aktuell[, c("Location", "nest_side", "Habitat",
@@ -468,7 +463,7 @@ GLMM_0_loc <- fitme(cbind(Pigeon, Rest)~ 1 + (1|Location/nest_side),
                     data = pigeon,
                     method = "PQL/L")
 
-# prediction
+### Odds ratio
 Odds_ratio <- exp(GLMM_pigeon_spaMM_loc$fixef["HabitatUrban"])
 Odds_ratio
 # HabitatUrban 
@@ -478,7 +473,7 @@ exp(CI_diet$interval)
 # lower HabitatUrban upper HabitatUrban 
 # 2.436699           5.281086 
 
-#### bootstrap ###
+### bootstrap ###
 set.seed(123)
 anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
 # bootstrap took 241.8 s.
@@ -490,7 +485,7 @@ anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_co
 #   chi2_LR df    p_value
 # p_v 5.998557  1 0.01431759
 
-############ diversity ######################
+## diversity ###########################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
@@ -503,7 +498,7 @@ diversity$diversity_nest <- as.numeric(diversity$diversity_nest)
 diversity <- na.omit(diversity)
 diversity <- as.data.frame(diversity)
 
-## Here we use lme4 as an interim step to estimate the BoxCox transformation to be applied in spaMM
+### Here we use lme4 as an interim step to estimate the BoxCox transformation to be applied in spaMM
 lmer_diversity <- lmer(diversity_nest ~ Habitat + (1|Location), data = diversity, REML = FALSE)
 
 spaMM_diversity_coor <- fitme(diversity_nest ~ Habitat +(1|Location), data = diversity)
@@ -523,7 +518,7 @@ spaMM_diversity_0 <- fitme(diversity_nest ~ 1 + (1|Location), data = diversity)
 lmer_diversity_upda <-  lmer(diversity_nest_bc ~ 1 + (1|Location), data = diversity, REML = FALSE)
 spaMM_diversity_upda_0 <- fitme(diversity_nest_bc ~ 1 + (1|Location), data = diversity)
 
-### effect ########
+### test effect #
 pred_trans_rural <- (spaMM_diversity3$fixef["(Intercept)"] * bc_lmer$lambda + 1)^(1/bc_lmer$lambda)
 pred_trans_urban <- ((spaMM_diversity3$fixef["(Intercept)"] + spaMM_diversity3$fixef["HabitatUrban"]) * bc_lmer$lambda + 1)^(1/bc_lmer$lambda)
 pred_trans_urban - pred_trans_rural
@@ -543,7 +538,7 @@ anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = boot.repl, nb_cores 
 # p_v 6.12485  1 0.01332946
 
 
-################# species richness ############################################################################################
+## species richness ####################################
 
 Rupfungen_per_nest_aktuell <- read_excel("./source_data/goshawk_data_diet.xlsx")
 
@@ -564,7 +559,7 @@ glm_species_spaMM <- fitme(Species_richness_nest ~ Habitat+(1|Location),
 glm_0_spaMM <- fitme(Species_richness_nest ~ 1 + (1|Location), 
                      family = Tnegbin, data = species)
 
-# Habitat Effect
+### Habitat Effect
 predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural")), 
         re.form = NA)
 # Point predictions:
@@ -576,7 +571,7 @@ diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural
 # 1.439895
 
 
-#### bootstrap 
+### bootstrap 
 set.seed(123)
 anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 302.7 s.
@@ -588,8 +583,8 @@ anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores
 #   chi2_LR df    p_value
 # p_v 4.782857  1 0.02874439
 
-########### Breeding performance #########################################################################################
-### Laying date ###
+# Breeding performance #########################################################################################
+## egg laying date ###
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_nest2 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
@@ -604,7 +599,7 @@ goshawk_nest2 <- droplevels(na.omit(goshawk_nest2))
 lmm_laying2 <- fitme(Laying_begin_day ~ Habitat + Temp_breeding_begin  + 
                      (1|Location/Territory), family = gaussian, data = goshawk_nest2)
 
-# odds
+### odds ratio
 lmm_laying2$fixef["Habitaturban"] 
 # Habitaturban 
 # -12.49214
@@ -623,6 +618,7 @@ lmm_laying_no_Temp <- fitme(Laying_begin_day ~ Habitat + (1|Location/Territory),
 
 ### bootstrap
 set.seed(123)
+
 anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 559.1 s.
 # chi2_LR df      p_value
@@ -632,6 +628,7 @@ anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_c
 # Bartlett-corrected LR test:
 #   chi2_LR df    p_value
 # p_v 6.617723  1 0.01009689
+
 anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 465.8 s.
 # chi2_LR df   p_value
@@ -642,10 +639,12 @@ anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_core
 #   chi2_LR df   p_value
 # p_v 1.460426  1 0.2268624
 
-########## reproductive output (number of nestlings) ############
+
+## reproductive output (brood size) ############
+
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
-## wilcox Number of nestlings
+### wilcox Number of nestlings
 wilcox.test(No_nestlings ~ Habitat, data = table_per_nest)
 # Wilcoxon rank sum test with continuity correction
 # 
@@ -653,7 +652,7 @@ wilcox.test(No_nestlings ~ Habitat, data = table_per_nest)
 # W = 3517.5, p-value = 0.0006975
 # alternative hypothesis: true location shift is not equal to 0
 
-## Figure Number of nestlings per nest
+### Figure Number of nestlings per nest raw data
 
 n_land <- nrow(table_per_nest[table_per_nest$Habitat == "rural", ])
 n_stadt <- nrow(table_per_nest[table_per_nest$Habitat == "urban", ])
@@ -688,8 +687,8 @@ ggplot(cut_off, aes(x = No_nestlings, y = prop, fill = Habitat, ymin = CI_lwr, y
 
 ggsave(filename = "./figures/figure6.pdf", width = 10, height = 7)
 
+## model brood size ######
 
-##### GLMM
 goshawk_nest3 <- table_per_nest[, c("Year", "Location", "No_nestlings", "Laying_begin_day",
                                     "Territory", "Habitat", "Temp_breeding_begin")]
 goshawk_nest3$Year <- as.factor(goshawk_nest3$Year)
@@ -706,7 +705,7 @@ glmm_nestlings <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day +
                         family = binomial(link = "logit"), data = goshawk_nest3, 
                         method = "PQL/L")
 
-# effects
+### test effects
 glmm_nestlings_no_Habitat <- fitme(No_nestlings_binary ~ Laying_begin_day + 
                                    Temp_breeding_begin + (1|Location/Territory),
                                    family = binomial(link = "logit"), data = goshawk_nest3, 
@@ -720,7 +719,7 @@ glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day
                                 (1|Location/Territory), family = binomial(link = "logit"), 
                                 data = goshawk_nest3, method = "PQL/L")
 
-# bootstraps
+### bootstraps
 set.seed(123)
 anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 
@@ -728,8 +727,7 @@ anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = boot.repl, nb_cores = n
 
 anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 
-##### predictive figures ####
-# subset urban/rural
+### predictive figures ####
 urban1 <- subset(goshawk_nest3, Habitat == "urban")
 rural1 <- subset(goshawk_nest3, Habitat == "rural")
 
@@ -768,19 +766,19 @@ axis(1, at = seq(60,120, by = 10), labels = labelist)
 axis(2, las = 2)
 dev.off()
 
-###### without laying start ##############################
+## brood size model without laying start ################
 glmm_nestlings2 <- fitme(No_nestlings_binary ~ Habitat + Temp_breeding_begin + 
                         (1|Location/Territory), family = binomial(link = "logit"),
                          data = goshawk_nest3, method = "PQL/L")
 
-# Odd
+### Odds ratio
 exp(glmm_nestlings2$fixef["Habitaturban"])
 # Habitaturban 
 # 2.217902
 CI_nestlings <- confint(glmm_nestlings2, "Habitaturban")
 exp(CI_nestlings$interval)
 
-#### testing effects########
+### testing effects
 glmm_nestlings_no_Habitat2 <- fitme(No_nestlings_binary ~ Temp_breeding_begin + 
                                     (1|Location/Territory), family = binomial(link = "logit"),
                                     data = goshawk_nest3, method = "PQL/L")
@@ -790,15 +788,15 @@ glmm_nestlings_no_Temp2 <- fitme(No_nestlings_binary ~ Habitat + (1|Location/Ter
                                  data = goshawk_nest3,
                                  method = "PQL/L")
 
-## bootstraps
+### bootstraps
 set.seed(123)
 anova(glmm_nestlings2, glmm_nestlings_no_Habitat2, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-###################### Health status of goshawk nestlings ####################################
+#Health status of goshawk nestlings ####################################
 
-#### prevalence ####
+## prevalence ####
 Tabelle_Statistik_urban_ecology_aktuell <- read_excel("./source_data/goshawk_data_nestlings.xlsx")
 
 goshawk_urban <- Tabelle_Statistik_urban_ecology_aktuell[, c("Year", "Location","No_nestlings", "Sex", 
@@ -813,18 +811,17 @@ goshawk_urban$Clinical_binary <- as.numeric(goshawk_urban$Clinical_binary)
 goshawk_urban <- as.data.frame(goshawk_urban)
 goshawk_urban <- droplevels(na.omit(goshawk_urban))
 
-# subset urban/rural
 urban2 <- subset(goshawk_urban, Habitat == "urban")
 rural2 <- subset(goshawk_urban, Habitat == "rural")
 
-# Median age
+### Median age
 median(urban2$Age)
 # 24
 median(rural2$Age)
 # 23
 
-#### figure prevalence ###
-### plot rawdata
+### figure prevalence raw data w###
+
 plot_data <- goshawk_urban %>%
   group_by(Year, Habitat) %>%
   summarise(n = n(), 
@@ -848,21 +845,21 @@ ggplot(plot_data, aes(y = prop_inf, x = Year, ymin = CI_lwr, ymax = CI_upr, fill
         panel.grid.minor.x = element_blank()) 
 ggsave(filename = "./figures/figure8.pdf", width = 8, height = 8)
 
-## Analysis trichomonas
+## Model trichomonas
 glmm_tricho_logit <- fitme(Prevalence ~ Habitat + Age + No_nestlings +  Sex + Temp_age + 
                            Year + laying_day +(1|Location/Territory),
                            family = binomial(link = "logit"),
                            data = goshawk_urban,
                            method = "PQL/L")
 
-# odds
+### odds ratio
 exp(glmm_tricho_logit$fixef["Habitaturban"])
 # Habitaturban 
 # 2.833019
 CI_tricho <- confint(glmm_tricho_logit, "Habitaturban")
 exp(CI_tricho$interval)
 
-#test effects
+### test effects
 glmm_tricho_logit_noHabitat <- fitme(Prevalence ~  Age + No_nestlings + Sex + Temp_age + 
                                      Year + laying_day + (1|Location/Territory),
                                      family = binomial(link = "logit"), 
@@ -909,21 +906,21 @@ anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = boot.repl, nb_cor
 anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-### clinical signs ##############
+## model clinical signs ##############
 
 glmm_clinical <- fitme(Clinical_binary ~ Habitat + Age + Sex + Year + laying_day + 
                        No_nestlings + Temp_age + (1|Location/Territory),
                        family = binomial(link = "logit"), 
                        data = goshawk_urban, method = "PQL/L")
 
-# odds
+### odds
 exp(glmm_clinical$fixef["Habitaturban"])
 # Habitaturban 
 # 10.89108 
 CI_clinical <- confint(glmm_clinical, "Habitaturban")
 exp(CI_clinical$interval)
 
-#test effects
+### test effects
 glmm_clinical_noHabitat <- fitme(Clinical_binary ~  Age + No_nestlings + Sex + Year + 
                                  laying_day + Temp_age + (1|Location/Territory),
                                  family = binomial(link = "logit"), data = goshawk_urban, 
@@ -959,7 +956,7 @@ glmm_clinical_noDay <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Se
                              family = binomial(link = "logit"), data = goshawk_urban, 
                              method = "PQL/L")
 
-## bootstraps
+### bootstraps
 set.seed(123)
 anova(glmm_clinical, glmm_clinical_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_clinical, glmm_clinical_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -969,9 +966,9 @@ anova(glmm_clinical, glmm_clinical_noTemp, boot.repl = boot.repl, nb_cores = nb_
 anova(glmm_clinical, glmm_clinical_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_clinical, glmm_clinical_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
 
-#### plots predictions clinical signs ######
+### plots predictions clinical signs ######
 
-# Laying day
+#### clinical signs ~ Laying day
 predictor_lay3 <- seq(min(goshawk_urban$laying_day, na.rm = TRUE),
                       max(goshawk_urban$laying_day, na.rm = TRUE),
                       length = 30)
@@ -1023,7 +1020,7 @@ axis(2, las = 2)
 
 dev.off()
 
-#### Age
+#### clinical signs~Age
 predictor_age <- seq(min(goshawk_urban$Age, na.rm = TRUE),
                      max(goshawk_urban$Age, na.rm = TRUE),
                      length = 30)
@@ -1071,8 +1068,10 @@ rug(x = jitter(rural2$Age[rural2$Clinical_binary == "1"]), side = 3, col = "grey
 dev.off()
 
 
-###################### Causes of mortality ############################################################
-###### tricho######
+# Causes of mortality ############################################################
+
+## model trichomonosis ######
+
 Todesursachen_Statistik <- read_excel("./source_data/goshawk_data_death.xlsx")
 
 death <- Todesursachen_Statistik[, c("age", "location", "Trichomonosiasis",
@@ -1093,7 +1092,7 @@ glm_death_GLM <- glm(Trichomonosiasis ~ location + age + sex,
                      family = binomial(link = "logit"),
                      data = death)
 
-# effects
+### test effects
 glm_death_no_loc <- fitme(Trichomonosiasis ~ age + sex,
                           family = binomial(link = "logit"),
                           data = death, method = "PQL/L")
@@ -1108,7 +1107,7 @@ glm_death_no_sex <- fitme(Trichomonosiasis ~ location + age,
                           data = death,
                           method = "PQL/L")
 
-# odds ratio
+### odds ratio
 exp(glm_death$fixef["locationUrban"]) 
 # locationUrban 
 # 5.145808
@@ -1117,14 +1116,14 @@ exp(CI_death)
 # 2.5 %    97.5 % 
 # 1.075153 43.764468 
 
-
-## bootstraps
+### bootstraps
 set.seed(123)
 anova(glm_death_no_loc, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 
-####### window####
+
+## model Trauma window collision ####
 
 glm_death2 <- fitme(Trauma_window ~ location + sex,
                     family = binomial(link = "logit"),
@@ -1135,7 +1134,7 @@ glm_death2_GLM <- glm(Trauma_window ~ location + sex,
                     family = binomial(link = "logit"),
                     data = death)
 
-# effects
+### test effects
 glm_death_no_loc2 <- fitme(Trauma_window ~  sex,
                            family = binomial(link = "logit"),
                            data = death,
@@ -1146,7 +1145,7 @@ glm_death_no_sex2 <- fitme(Trauma_window ~ location,
                            data = death,
                            method = "PQL/L")
 
-# odds ratio
+### odds ratio
 exp(glm_death2$fixef["locationUrban"]) 
 # locationUrban 
 # 3.537027
@@ -1163,14 +1162,15 @@ exp(CI_death2sex)
 # 2.5 %    97.5 % 
 # 1.194481 4.600079 
 
-## bootstraps
+### bootstraps
 set.seed(123)
 anova(glm_death_no_loc2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_sex2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
-##### figure ###
+### figures causes of death ###
 
+#### raw data
 Todesursachen_Statistik <- read_excel("./source_data/goshawk_data_death.xlsx")
 Todesursachen_Statistik <- Todesursachen_Statistik %>% 
   mutate(Cause_of_death = ifelse(Cause_of_death == "Unknwon", "Unknown", 
@@ -1184,7 +1184,6 @@ Todesursachen_Statistik$Cause_of_death <- factor(Todesursachen_Statistik$Cause_o
                                                  levels = levels(Todesursachen_Statistik$Cause_of_death)[c(13, 11, 12, 14, 2,7,1, 9,3, 10,8,5,4, 6, 15)])
 
 
-# variable proportion~causes_of_death
 Todesursachen_Statistik$location <- relevel(as.factor(Todesursachen_Statistik$location), ref = "Urban")
 total_urban <- nrow(Todesursachen_Statistik[Todesursachen_Statistik$location == "Urban", ])
 total_rural <- nrow(Todesursachen_Statistik[Todesursachen_Statistik$location == "Rural", ])
@@ -1214,10 +1213,9 @@ ggplot(data_plot2, aes(y = prop, x = Cause_of_death, fill = location, ymin = CI_
 ggsave(filename = "./figures/figure11.pdf", width = 10, height = 8)
 
 
+# Figures supporting information #####################################################
 
-
-###################### Figures supporting information #####################################################
-
+## imperviousness
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
 
 goshawk_imper <- subset(table_per_nest, Species == "Goshawk")
@@ -1242,6 +1240,7 @@ urban1 <- as.matrix(urban1)
 
 pdf(file = "./figures/figureS2.pdf", width = 7, height = 5)
 
+## rarefaction
 par(las = 1, mar = c(5,4,1,1))
 plot(specaccum(rural1, 
                method = "rarefaction"), 
