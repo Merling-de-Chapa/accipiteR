@@ -579,7 +579,14 @@ diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural
 #### bootstrap 
 set.seed(123)
 anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
-
+# bootstrap took 302.7 s.
+# chi2_LR df    p_value
+# p_v 5.53247  1 0.01866674
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.03
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 4.782857  1 0.02874439
 
 ########### Breeding performance #########################################################################################
 ### Laying date ###
@@ -617,8 +624,23 @@ lmm_laying_no_Temp <- fitme(Laying_begin_day ~ Habitat + (1|Location/Territory),
 ### bootstrap
 set.seed(123)
 anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 559.1 s.
+# chi2_LR df      p_value
+# p_v 11.33817  1 0.0007592998
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.00899
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 6.617723  1 0.01009689
 anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
-
+# bootstrap took 465.8 s.
+# chi2_LR df   p_value
+# p_v 1.613375  1 0.2040181
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.221
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 1.460426  1 0.2268624
 
 ########## reproductive output (number of nestlings) ############
 table_per_nest <- read_excel("./source_data/goshawk_data_nest.xlsx")
@@ -701,7 +723,9 @@ glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day
 # bootstraps
 set.seed(123)
 anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+
 anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = boot.repl, nb_cores = nb_cores)
+
 anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 
 ##### predictive figures ####
