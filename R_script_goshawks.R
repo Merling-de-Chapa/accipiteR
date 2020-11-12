@@ -14,7 +14,6 @@ library(dplyr)
 library(doSNOW)
 library(vegan)
 
-set.seed(123L)
 spaMM.options(nb_cores = 3, separation_max = 1)
 boot.repl <- 1000 ## put 0 for not parametric bootstrap!
 nb_cores <- 3
@@ -153,6 +152,7 @@ odd_ratio_rural_young_vs_rural_old <- round(OR(prob_rural_young, prob_rural_old)
 odd_ratio_rural_young_vs_rural_old # [1] 6.24
 
 #### bootstrap to get p-values of each effect
+set.seed(123L)
 anova(test_react_int, test_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 1907.8 s.
 # chi2_LR df     p_value
@@ -479,9 +479,16 @@ exp(CI_diet$interval)
 # 2.436699           5.281086 
 
 #### bootstrap ###
-set.seed(1)
+set.seed(123)
 anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
-
+# bootstrap took 241.8 s.
+# chi2_LR df     p_value
+# p_v 10.16658  1 0.001430096
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.015
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 5.998557  1 0.01431759
 
 ############ diversity ######################
 
@@ -496,27 +503,25 @@ diversity$diversity_nest <- as.numeric(diversity$diversity_nest)
 diversity <- na.omit(diversity)
 diversity <- as.data.frame(diversity)
 
-## Here we use lme4 as an interim step to estimate the BoxCox transformation to 
-## be applied in spaMM
-lmer_diversity <- lmer(diversity_nest ~ Habitat + (1|Location), 
-                       data = diversity, REML = FALSE)
+## Here we use lme4 as an interim step to estimate the BoxCox transformation to be applied in spaMM
+lmer_diversity <- lmer(diversity_nest ~ Habitat + (1|Location), data = diversity, REML = FALSE)
 
 spaMM_diversity_coor <- fitme(diversity_nest ~ Habitat +(1|Location), data = diversity)
 
 bc_lmer <- powerTransform(lmer_diversity, family = "bcPower")
+diversity$diversity_nest_bc <- bcPower(diversity$diversity_nest, bc_lmer$lambda)
 
-lmer_diversity2 <- update(lmer_diversity, bcPower(diversity_nest, bc_lmer$lambda) ~ .)
-spaMM_diversity3 <- update(spaMM_diversity_coor, bcPower(diversity_nest, bc_lmer$lambda) ~ .)
+lmer_diversity2 <- lmer(diversity_nest_bc ~ Habitat + (1|Location), data = diversity, REML = FALSE)
+spaMM_diversity3 <- fitme(diversity_nest_bc ~ Habitat +(1|Location), data = diversity)
 
 logLik(lmer_diversity2)
 logLik(spaMM_diversity3) ## same loglik across packages! GOOD
 
-lmer_diversity_0 <- lmer(diversity_nest ~ 1 + (1|Location), data = diversity, 
-                         REML = FALSE)
+lmer_diversity_0 <- lmer(diversity_nest ~ 1 + (1|Location), data = diversity, REML = FALSE)
 spaMM_diversity_0 <- fitme(diversity_nest ~ 1 + (1|Location), data = diversity)
 
-lmer_diversity_upda <- update(lmer_diversity_0, bcPower(diversity_nest, bc_lmer$lambda) ~ .)
-spaMM_diversity_upda_0 <- update(spaMM_diversity_0, bcPower(diversity_nest, bc_lmer$lambda) ~ .)
+lmer_diversity_upda <-  lmer(diversity_nest_bc ~ 1 + (1|Location), data = diversity, REML = FALSE)
+spaMM_diversity_upda_0 <- fitme(diversity_nest_bc ~ 1 + (1|Location), data = diversity)
 
 ### effect ########
 pred_trans_rural <- (spaMM_diversity3$fixef["(Intercept)"] * bc_lmer$lambda + 1)^(1/bc_lmer$lambda)
@@ -526,7 +531,16 @@ pred_trans_urban - pred_trans_rural
 # -0.1099321 
 
 ### bootstrap
+set.seed(123)
 anova(spaMM_diversity3, spaMM_diversity_upda_0, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 107.7 s.
+# chi2_LR df     p_value
+# p_v 8.929882  1 0.002805424
+# ======== Bootstrap: ========
+#   Raw simulated p-value: 0.00799
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 6.12485  1 0.01332946
 
 
 ################# species richness ############################################################################################
@@ -542,7 +556,6 @@ species$Habitat <- as.factor(species$Habitat)
 species$Species_richness_nest <- as.numeric(species$Species_richness_nest)
 species <- na.omit(species)
 species <- as.data.frame(species)
-str(species)
 
 glm_species_spaMM <- fitme(Species_richness_nest ~ Habitat+(1|Location),
                            family = Tnegbin(),
@@ -564,6 +577,7 @@ diff(predict(glm_species_spaMM, newdata = data.frame(Habitat = c("Urban", "Rural
 
 
 #### bootstrap 
+set.seed(123)
 anova(glm_species_spaMM, glm_0_spaMM, boot.repl = boot.repl, nb_cores = nb_cores)
 
 
@@ -601,6 +615,7 @@ lmm_laying_no_Temp <- fitme(Laying_begin_day ~ Habitat + (1|Location/Territory),
                             family = gaussian, data = goshawk_nest2)
 
 ### bootstrap
+set.seed(123)
 anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(lmm_laying2, lmm_laying_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
 
@@ -684,6 +699,7 @@ glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day
                                 data = goshawk_nest3, method = "PQL/L")
 
 # bootstraps
+set.seed(123)
 anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -751,6 +767,7 @@ glmm_nestlings_no_Temp2 <- fitme(No_nestlings_binary ~ Habitat + (1|Location/Ter
                                  method = "PQL/L")
 
 ## bootstraps
+set.seed(123)
 anova(glmm_nestlings2, glmm_nestlings_no_Habitat2, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores = nb_cores)
 
@@ -858,6 +875,7 @@ glmm_tricho_logit_noDay <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex
                                  method = "PQL/L")
 
 ### bootstraps
+set.seed(123)
 anova(glmm_tricho_logit, glmm_tricho_logit_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_tricho_logit, glmm_tricho_logit_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_tricho_logit, glmm_tricho_logit_noage, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -918,6 +936,7 @@ glmm_clinical_noDay <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Se
                              method = "PQL/L")
 
 ## bootstraps
+set.seed(123)
 anova(glmm_clinical, glmm_clinical_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_clinical, glmm_clinical_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glmm_clinical, glmm_clinical_noage, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -1076,6 +1095,7 @@ exp(CI_death)
 
 
 ## bootstraps
+set.seed(123)
 anova(glm_death_no_loc, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
@@ -1120,6 +1140,7 @@ exp(CI_death2sex)
 # 1.194481 4.600079 
 
 ## bootstraps
+set.seed(123)
 anova(glm_death_no_loc2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
 anova(glm_death_no_sex2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
 
