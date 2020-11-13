@@ -62,8 +62,6 @@ goshawk_nest$reaction <- goshawk_nest$reaction_female != "no reaction"
 goshawk_nest$Age <- ifelse(goshawk_nest$Age_youngest <= 16,"young","old")
 goshawk_nest$Age <- as.factor(goshawk_nest$Age)
 
-str(goshawk_nest)
-
 urban <- subset(goshawk_nest, Habitat == "urban")
 rural <- subset(goshawk_nest, Habitat == "rural")
 
@@ -224,12 +222,37 @@ test_no_int <- fitme(reaction ~ Habitat + Age + No_nestlings + Laying_begin_day 
                      family = binomial(link = "logit"), data = goshawk_nest, 
                      method = "PQL/L")
 
-### odds ration
+### odds ratio
 round(exp(fixef(test_no_int)["Habitaturban"]), 2)
 # Habitaturban (Odds-ratio)
 # 21.68
 CI_behaviour <- confint(test_no_int, "Habitaturban")
 exp(CI_behaviour$interval)
+# lower Habitaturban upper Habitaturban 
+#          10.13009           21.9269
+
+
+### Improve fit for more reliable CI
+refit_test_no_int <- test_no_int
+  for (i in 1:5) {
+    refit_test_no_int <- update(refit_test_no_int,
+                                init = list(lambda = unique(CI_behaviour$confint_best_fit$ranPars$lambda)),
+                                init.HLfit = list(fixef = CI_behaviour$confint_best_fit$beta_eta))
+    CI_behaviour <- confint(refit_test_no_int, "Habitaturban")
+    print(exp(CI_behaviour$interval))
+  }
+exp(CI_behaviour$interval)
+# lower Habitaturban upper Habitaturban 
+#          5.129949         130.546767
+cbind(fixef(refit_test_no_int), fixef(test_no_int)) ## the change in parameter estimates remains minimal and will be neglected
+#                         [,1]        [,2]
+# (Intercept)       6.97399820  6.98972574
+# Habitaturban      3.09604863  3.07656847
+# Ageyoung          1.62236032  1.63593499
+# No_nestlings     -0.33113174 -0.32905848
+# Laying_begin_day -0.09258641 -0.09263122
+# Year2016          1.48054505  1.47856159
+# Rainfall         -0.06217306 -0.06094037
 
 ### test effects
 test_no_Habitat <- fitme(reaction ~ Age + No_nestlings + Laying_begin_day + Year + 
@@ -476,6 +499,24 @@ exp(CI_diet$interval)
 # lower HabitatUrban upper HabitatUrban 
 # 2.436699           5.281086 
 
+### Improve fit for more reliable CI
+refit_GLMM_pigeon_spaMM_loc <- GLMM_pigeon_spaMM_loc
+  for (i in 1:5) {
+    refit_GLMM_pigeon_spaMM_loc <- update(refit_GLMM_pigeon_spaMM_loc,
+                                init = list(lambda = unique(CI_diet$confint_best_fit$ranPars$lambda)),
+                                init.HLfit = list(fixef = CI_diet$confint_best_fit$beta_eta))
+    CI_diet <- confint(refit_GLMM_pigeon_spaMM_loc, "HabitatUrban")
+    print(exp(CI_diet$interval))
+  }
+exp(CI_diet$interval)
+# lower HabitatUrban upper HabitatUrban 
+#          2.051880           6.661841
+cbind(fixef(refit_GLMM_pigeon_spaMM_loc), fixef(GLMM_pigeon_spaMM_loc)) ## the change in parameter estimates remains minimal and will be neglected
+#                   [,1]       [,2]
+# (Intercept)  -0.665362 -0.6614136
+# HabitatUrban  1.295880  1.291366
+
+
 ### bootstrap ###
 set.seed(123)
 anova(GLMM_0_loc, GLMM_pigeon_spaMM_loc, boot.repl = boot.repl, nb_cores = nb_cores) 
@@ -610,6 +651,7 @@ CI_laying <- confint(lmm_laying2, "Habitaturban")
 CI_laying
 #lower Habitaturban upper Habitaturban 
 #-17.365852          -7.121119
+
 
 ### test  effects
 lmm_laying_no_Habitat <- fitme(Laying_begin_day ~ Temp_breeding_begin + 
@@ -803,6 +845,27 @@ exp(glmm_nestlings2$fixef["Habitaturban"])
 # 2.217902
 CI_nestlings <- confint(glmm_nestlings2, "Habitaturban")
 exp(CI_nestlings$interval)
+# lower Habitaturban upper Habitaturban 
+#          1.724201           2.2207
+
+### Improve fit for more reliable CI
+refit_glmm_nestlings2 <- glmm_nestlings2
+  for (i in 1:5) {
+    refit_glmm_nestlings2 <- update(refit_glmm_nestlings2,
+                                init = list(lambda = unique(CI_nestlings$confint_best_fit$ranPars$lambda)),
+                                init.HLfit = list(fixef = CI_nestlings$confint_best_fit$beta_eta))
+    CI_nestlings <- confint(refit_glmm_nestlings2, "Habitaturban")
+    print(exp(CI_nestlings$interval))
+  }
+exp(CI_nestlings$interval)
+# lower Habitaturban upper Habitaturban 
+#         0.9844251          4.7337744
+cbind(fixef(refit_glmm_nestlings2), fixef(glmm_nestlings2)) ## the change in parameter estimates remains minimal and will be neglected
+#                            [,1]        [,2]
+# (Intercept)         -0.17167554 -0.17246528
+# Habitaturban         0.79670641  0.79656178
+# Temp_breeding_begin  0.08200158  0.08220989
+
 
 ### testing effects
 glmm_nestlings_no_Habitat2 <- fitme(No_nestlings_binary ~ Temp_breeding_begin + 
@@ -900,6 +963,32 @@ exp(glmm_tricho_logit$fixef["Habitaturban"])
 # 2.833019
 CI_tricho <- confint(glmm_tricho_logit, "Habitaturban")
 exp(CI_tricho$interval)
+# lower Habitaturban upper Habitaturban 
+#         0.9757569          7.5532315
+
+### Improve fit for more reliable CI
+refit_glmm_tricho_logit <- glmm_tricho_logit
+  for (i in 1:10) {
+    refit_glmm_tricho_logit <- update(refit_glmm_tricho_logit,
+                                init = list(lambda = unique(CI_tricho$confint_best_fit$ranPars$lambda)),
+                                init.HLfit = list(fixef = CI_tricho$confint_best_fit$beta_eta))
+    CI_tricho <- confint(refit_glmm_tricho_logit, "Habitaturban")
+    print(exp(CI_tricho$interval))
+  }
+exp(CI_tricho$interval)
+# lower Habitaturban upper Habitaturban 
+#          1.058916           8.443243
+cbind(fixef(refit_glmm_tricho_logit), fixef(glmm_tricho_logit)) ## the change in parameter estimates remains minimal and will be neglected
+#                     [,1]        [,2]
+# (Intercept)   3.44230963  3.44229931
+# Habitaturban  1.04134178  1.04134277
+# Age           0.02055114  0.02055125
+# No_nestlings  0.03126630  0.03126600
+# Sexmale      -0.18016419 -0.18016431
+# Temp_age     -0.09682991 -0.09682992
+# Year2015     -1.63311223 -1.63311200
+# Year2016     -0.50410795 -0.50410749
+# laying_day   -0.03120544 -0.03120537
 
 ### test effects
 glmm_tricho_logit_noHabitat <- fitme(Prevalence ~  Age + No_nestlings + Sex + Temp_age + 
@@ -1022,6 +1111,32 @@ exp(glmm_clinical$fixef["Habitaturban"])
 # 10.89108 
 CI_clinical <- confint(glmm_clinical, "Habitaturban")
 exp(CI_clinical$interval)
+# lower Habitaturban upper Habitaturban 
+#           1.12406          124.0513
+
+### Improve fit for more reliable CI
+refit_glmm_clinical <- glmm_clinical
+  for (i in 1:5) {
+    refit_glmm_clinical <- update(refit_glmm_clinical,
+                                init = list(lambda = unique(CI_clinical$confint_best_fit$ranPars$lambda)),
+                                init.HLfit = list(fixef = CI_clinical$confint_best_fit$beta_eta))
+    CI_clinical <- confint(refit_glmm_clinical, "Habitaturban")
+    print(exp(CI_clinical$interval))
+  }
+exp(CI_clinical$interval)
+# lower Habitaturban upper Habitaturban 
+#          1.251705         139.888440 
+cbind(fixef(refit_glmm_clinical), fixef(glmm_clinical)) ## the change in parameter estimates remains minimal and will be neglected
+#                     [,1]        [,2]
+# (Intercept)  -27.3601802 -27.3602633
+# Habitaturban   2.3879365   2.3879442
+# Age            0.2176689   0.2176688
+# Sexmale        0.4466760   0.4466765
+# Year2015       0.8119318   0.8119369
+# Year2016      -0.5139162  -0.5139207
+# laying_day     0.1130685   0.1130688
+# No_nestlings   0.4707574   0.4707609
+# Temp_age       0.2966867   0.2966890
 
 ### test effects
 glmm_clinical_noHabitat <- fitme(Clinical_binary ~  Age + No_nestlings + Sex + Year + 
