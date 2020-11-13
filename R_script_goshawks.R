@@ -1280,9 +1280,34 @@ exp(CI_death$interval)
 ### bootstraps
 set.seed(123)
 anova(glm_death_no_loc, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 76.7 s.
+# chi2_LR df    p_value
+# p_v 4.255485  1 0.03912378
+# Bootstrap results -
+#   Raw simulated p-value: 0.042
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 4.062958  1 0.04383365
 
+anova(glm_death_no_age, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 60.1 s.
+# chi2_LR df      p_value
+# p_v 33.50415  3 2.521052e-07
+# Bootstrap results -
+#   Raw simulated p-value: 0.000999
+# Bartlett-corrected LR test:
+#   chi2_LR df      p_value
+# p_v 30.54804  3 1.058246e-06
+
+anova(glm_death_no_sex, glm_death, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 76.1 s.
+# chi2_LR df   p_value
+# p_v 0.446204  1 0.5041431
+# Bootstrap results -
+#   Raw simulated p-value: 0.502
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.3256627  1 0.5682243
 
 ### model Trauma window collision ####
 
@@ -1290,10 +1315,6 @@ glm_death2 <- fitme(Trauma_window ~ location + sex,
                     family = binomial(link = "logit"),
                     data = death,
                     method = "PQL/L")
-
-glm_death2_GLM <- glm(Trauma_window ~ location + sex,
-                    family = binomial(link = "logit"),
-                    data = death)
 
 ### test effects
 glm_death_no_loc2 <- fitme(Trauma_window ~  sex,
@@ -1310,24 +1331,40 @@ glm_death_no_sex2 <- fitme(Trauma_window ~ location,
 exp(glm_death2$fixef["locationUrban"]) 
 # locationUrban 
 # 3.537027
-CI_death2loc <- confint(glm_death2_GLM, "locationUrban")
-exp(CI_death2loc)
+CI_death2loc <- confint(glm_death2, "locationUrban")
+exp(CI_death2loc$interval)
 # 2.5 %   97.5 % 
-# 1.388356 10.932307 
+# 1.388356 10.931200 
 
 exp(glm_death2$fixef["sexm"]) 
 # sexm 
 # 2.311387
-CI_death2sex <- confint(glm_death2_GLM, "sexm")
-exp(CI_death2sex)
+CI_death2sex <- confint(glm_death2, "sexm")
+exp(CI_death2sex$interval)
 # 2.5 %    97.5 % 
-# 1.194481 4.600079 
+# 1.194469   4.599951
 
 ### bootstraps
 set.seed(123)
 anova(glm_death_no_loc2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glm_death_no_sex2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 40 s.
+# chi2_LR df     p_value
+# p_v 7.351339  1 0.006701284
+# Bootstrap results -
+#   Raw simulated p-value: 0.00999
+# Bartlett-corrected LR test:
+#   chi2_LR df     p_value
+# p_v 7.149659  1 0.007497823
 
+anova(glm_death_no_sex2, glm_death2, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 32.1 s.
+# chi2_LR df  p_value
+# p_v 6.230475  1 0.012557
+# Bootstrap results -
+#   Raw simulated p-value: 0.012
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 6.21642  1 0.01265708
 
 ### figures causes of death ###
 
@@ -1426,7 +1463,7 @@ dev.off()
 
 
 ### INFORMATION ON THE SESSION ###
-sessionInfo()
+# sessionInfo()
 # R version 4.0.3 (2020-10-10)
 # Platform: x86_64-apple-darwin17.0 (64-bit)
 # Running under: macOS Catalina 10.15.7
@@ -1442,33 +1479,24 @@ sessionInfo()
 #   [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#   [1] vegan_2.5-6        lattice_0.20-41    permute_0.9-5      doSNOW_1.0.19      snow_0.4-3        
-# [6] iterators_1.0.13   foreach_1.5.1      mapdata_2.3.0      maps_3.3.0         ggplot2_3.3.2     
-# [11] binom_1.1-1        purrr_0.3.4        car_3.0-10         carData_3.0-4      DHARMa_0.3.3.0    
-# [16] readxl_1.3.1       dplyr_1.0.2        MASS_7.3-53        glmmTMB_1.0.2.9000 rstanarm_2.21.1   
-# [21] Rcpp_1.0.5         lme4_1.1-25        Matrix_1.2-18      spaMM_3.5.2       
+#   [1] vegan_2.5-6      lattice_0.20-41  permute_0.9-5    doSNOW_1.0.19    snow_0.4-3       iterators_1.0.13
+# [7] foreach_1.5.1    dplyr_1.0.2      mapdata_2.3.0    maps_3.3.0       ggplot2_3.3.2    binom_1.1-1     
+# [13] purrr_0.3.4      car_3.0-10       carData_3.0-4    lme4_1.1-25      Matrix_1.2-18    DHARMa_0.3.3.0  
+# [19] spaMM_3.5.32     readxl_1.3.1    
 # 
 # loaded via a namespace (and not attached):
-#   [1] plyr_1.8.6            igraph_1.2.6          TMB_1.7.18            splines_4.0.3         crosstalk_1.1.0.1    
-# [6] TH.data_1.0-10        rstantools_2.1.1      inline_0.3.16         digest_0.6.27         htmltools_0.5.0      
-# [11] rsconnect_0.8.16      fansi_0.4.1           magrittr_1.5          cluster_2.1.0         openxlsx_4.2.3       
-# [16] RcppParallel_5.0.2    matrixStats_0.57.0    xts_0.12.1            sandwich_3.0-0        prettyunits_1.1.1    
-# [21] colorspace_2.0-0      haven_2.3.1           callr_3.5.1           crayon_1.3.4          jsonlite_1.7.1       
-# [26] Rglpk_0.6-4           survival_3.2-7        zoo_1.8-8             glue_1.4.2            registry_0.5-1       
-# [31] gtable_0.3.0          emmeans_1.5.2-1       V8_3.4.0              pkgbuild_1.1.0        rstan_2.21.2         
-# [36] abind_1.4-5           scales_1.1.1          mvtnorm_1.1-1         miniUI_0.1.1.1        xtable_1.8-4         
-# [41] foreign_0.8-80        proxy_0.4-24          stats4_4.0.3          StanHeaders_2.21.0-6  DT_0.16              
-# [46] htmlwidgets_1.5.2     threejs_0.3.3         ellipsis_0.3.1        farver_2.0.3          pkgconfig_2.0.3      
-# [51] loo_2.3.1             labeling_0.4.2        tidyselect_1.1.0      rlang_0.4.8           reshape2_1.4.4       
-# [56] later_1.1.0.1         munsell_0.5.0         cellranger_1.1.0      tools_4.0.3           cli_2.1.0            
-# [61] generics_0.1.0        ROI.plugin.glpk_1.0-0 ggridges_0.5.2        stringr_1.4.0         fastmap_1.0.1        
-# [66] yaml_2.2.1            processx_3.4.4        zip_2.1.1             pbapply_1.4-3         nlme_3.1-150         
-# [71] mime_0.9              slam_0.1-47           ROI_1.0-0             compiler_4.0.3        bayesplot_1.7.2      
-# [76] shinythemes_1.1.2     rstudioapi_0.12       curl_4.3              tibble_3.0.4          statmod_1.4.35       
-# [81] stringi_1.5.3         ps_1.4.0              forcats_0.5.0         nloptr_1.2.2.2        markdown_1.1         
-# [86] shinyjs_2.0.0         vctrs_0.3.4           pillar_1.4.6          lifecycle_0.2.0       estimability_1.3     
-# [91] data.table_1.13.2     httpuv_1.5.4          R6_2.5.0              promises_1.1.1        gridExtra_2.3        
-# [96] rio_0.5.16            codetools_0.2-18      boot_1.3-25           colourpicker_1.1.0    gtools_3.8.2         
-# [101] assertthat_0.2.1      withr_2.3.0           shinystan_2.5.0       multcomp_1.4-14       mgcv_1.8-33          
-# [106] parallel_4.0.3        hms_0.5.3             grid_4.0.3            coda_0.19-4           minqa_1.2.4          
-# [111] numDeriv_2016.8-1.1   shiny_1.5.0           base64enc_0.1-3       dygraphs_1.1.1.6-1
+#   [1] Rcpp_1.0.5            assertthat_0.2.1      slam_0.1-47           R6_2.5.0             
+# [5] cellranger_1.1.0      ROI.plugin.glpk_1.0-0 pillar_1.4.6          rlang_0.4.8          
+# [9] curl_4.3              rstudioapi_0.12       minqa_1.2.4           data.table_1.13.2    
+# [13] nloptr_1.2.2.2        splines_4.0.3         statmod_1.4.35        foreign_0.8-80       
+# [17] munsell_0.5.0         proxy_0.4-24          ROI_1.0-0             compiler_4.0.3       
+# [21] numDeriv_2016.8-1.1   pkgconfig_2.0.3       mgcv_1.8-33           Rglpk_0.6-4          
+# [25] tidyselect_1.1.0      tibble_3.0.4          rio_0.5.16            codetools_0.2-18     
+# [29] fansi_0.4.1           crayon_1.3.4          withr_2.3.0           MASS_7.3-53          
+# [33] grid_4.0.3            nlme_3.1-150          gtable_0.3.0          lifecycle_0.2.0      
+# [37] registry_0.5-1        magrittr_1.5          scales_1.1.1          zip_2.1.1            
+# [41] cli_2.1.0             stringi_1.5.3         pbapply_1.4-3         ellipsis_0.3.1       
+# [45] vctrs_0.3.4           generics_0.1.0        boot_1.3-25           openxlsx_4.2.3       
+# [49] tools_4.0.3           forcats_0.5.0         glue_1.4.2            hms_0.5.3            
+# [53] abind_1.4-5           parallel_4.0.3        yaml_2.2.1            colorspace_2.0-0     
+# [57] cluster_2.1.0         haven_2.3.1# 
