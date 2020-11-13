@@ -1253,10 +1253,6 @@ glm_death <- fitme(Trichomonosiasis ~ location + age + sex,
                    data = death,
                    method = "PQL/L")
 
-glm_death_GLM <- glm(Trichomonosiasis ~ location + age + sex,
-                     family = binomial(link = "logit"),
-                     data = death)
-
 ### test effects
 glm_death_no_loc <- fitme(Trichomonosiasis ~ age + sex,
                           family = binomial(link = "logit"),
@@ -1276,10 +1272,10 @@ glm_death_no_sex <- fitme(Trichomonosiasis ~ location + age,
 exp(glm_death$fixef["locationUrban"]) 
 # locationUrban 
 # 5.145808
-CI_death <- confint(glm_death_GLM, parm = "locationUrban")
-exp(CI_death)
+CI_death <- confint(glm_death, parm = "locationUrban")
+exp(CI_death$interval)
 # 2.5 %    97.5 % 
-# 1.075153 43.764468 
+# 1.075153 43.74859 
 
 ### bootstraps
 set.seed(123)
