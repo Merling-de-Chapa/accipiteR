@@ -621,7 +621,6 @@ lmm_laying_no_Temp <- fitme(Laying_begin_day ~ Habitat + (1|Location/Territory),
 
 ### bootstrap
 set.seed(123)
-
 anova(lmm_laying2, lmm_laying_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
 # bootstrap took 559.1 s.
 # chi2_LR df      p_value
@@ -725,10 +724,34 @@ glmm_nestlings_no_Temp <- fitme(No_nestlings_binary ~ Habitat + Laying_begin_day
 ### bootstraps
 set.seed(123)
 anova(glmm_nestlings, glmm_nestlings_no_Habitat, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 3930.3 s.
+# chi2_LR df  p_value
+# p_v 0.005885621  1 0.938848
+# Bootstrap results -
+#   Raw simulated p-value: 0.939
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.006440164  1 0.9360379
 
 anova(glmm_nestlings, glmm_nestlings_no_day, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 2176.4 s.
+# chi2_LR df     p_value
+# p_v 6.648189  1 0.009925667
+# Bootstrap results -
+#   Raw simulated p-value: 0.011
+# Bartlett-corrected LR test:
+#   chi2_LR df     p_value
+# p_v 6.649499  1 0.009918371
 
 anova(glmm_nestlings, glmm_nestlings_no_Temp, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1819.5 s.
+# chi2_LR df   p_value
+# p_v 0.434495  1 0.5097915
+# Bootstrap results -
+#   Raw simulated p-value: 0.543
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.384722  1 0.5350869
 
 ### predictive figures ####
 urban1 <- subset(goshawk_nest3, Habitat == "urban")
@@ -794,8 +817,24 @@ glmm_nestlings_no_Temp2 <- fitme(No_nestlings_binary ~ Habitat + (1|Location/Ter
 ### bootstraps
 set.seed(123)
 anova(glmm_nestlings2, glmm_nestlings_no_Habitat2, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1621.8 s.
+# chi2_LR df    p_value
+# p_v 5.543066  1 0.01855405
+# Bootstrap results -
+#   Raw simulated p-value: 0.036
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 4.359898  1 0.0367945
 
+anova(glmm_nestlings2, glmm_nestlings_no_Temp2, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1645.6 s.
+# chi2_LR df   p_value
+# p_v 0.2953909  1 0.5867865
+# Bootstrap results -
+#   Raw simulated p-value: 0.551
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.2924267  1 0.5886696
 
 #Health status of goshawk nestlings ####################################
 
@@ -901,13 +940,74 @@ glmm_tricho_logit_noDay <- fitme(Prevalence ~ Habitat + Age + No_nestlings + Sex
 ### bootstraps
 set.seed(123)
 anova(glmm_tricho_logit, glmm_tricho_logit_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_noage, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_noTemp, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_noSex, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
-anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 777.9 s.
+# chi2_LR df   p_value
+# p_v 4.898387  1 0.0268818
+# Bootstrap results -
+#   Raw simulated p-value: 0.0609
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 3.522858  1 0.06052799
 
+anova(glmm_tricho_logit, glmm_tricho_logit_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 871.5 s.
+# chi2_LR df   p_value
+# p_v 0.07931965  1 0.7782215
+# Bootstrap results -
+#   Raw simulated p-value: 0.792
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.07360907  1 0.7861527
+
+anova(glmm_tricho_logit, glmm_tricho_logit_noage, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 920.9 s.
+# chi2_LR df   p_value
+# p_v 0.5076017  1 0.4761789
+# Bootstrap results -
+#   Raw simulated p-value: 0.476
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.5029526  1 0.4782057
+
+anova(glmm_tricho_logit, glmm_tricho_logit_noTemp, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 840.6 s.
+# chi2_LR df   p_value
+# p_v 0.4832521  1 0.4869529
+# Bootstrap results -
+#   Raw simulated p-value: 0.5
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.4511261  1 0.5018007
+
+anova(glmm_tricho_logit, glmm_tricho_logit_noSex, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 786.1 s.
+# chi2_LR df   p_value
+# p_v 0.6903163  1 0.4060568
+# Bootstrap results -
+#   Raw simulated p-value: 0.397
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.687208  1 0.4071157
+
+anova(glmm_tricho_logit, glmm_tricho_logit_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 746.5 s.
+# chi2_LR df      p_value
+# p_v 19.83426  2 4.932259e-05
+# Bootstrap results -
+#   Raw simulated p-value: 0.000999
+# Bartlett-corrected LR test:
+#   chi2_LR df      p_value
+# p_v 18.20684  2 0.0001112844
+
+anova(glmm_tricho_logit, glmm_tricho_logit_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 762.3 s.
+# chi2_LR df   p_value
+# p_v 1.197233  1 0.2738755
+# Bootstrap results -
+#   Raw simulated p-value: 0.326
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 1.042463  1 0.3072492
 
 ### model clinical signs ##############
 
@@ -962,12 +1062,74 @@ glmm_clinical_noDay <- fitme(Clinical_binary ~ Habitat + Age + No_nestlings + Se
 ### bootstraps
 set.seed(123)
 anova(glmm_clinical, glmm_clinical_noHabitat, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1214.3 s.
+# chi2_LR df     p_value
+# p_v 6.698365  1 0.009650135
+# Bootstrap results -
+#   Raw simulated p-value: 0.016
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 5.882912  1 0.01528852
+
 anova(glmm_clinical, glmm_clinical_nonest, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1134.6 s.
+# chi2_LR df   p_value
+# p_v 1.575738  1 0.2093756
+# Bootstrap results -
+#   Raw simulated p-value: 0.242
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 1.338366  1 0.2473223
+
 anova(glmm_clinical, glmm_clinical_noage, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1348.7 s.
+# chi2_LR df      p_value
+# p_v 13.87052  1 0.0001958465
+# Bootstrap results -
+#   Raw simulated p-value: 0.000999
+# Bartlett-corrected LR test:
+#   chi2_LR df      p_value
+# p_v 13.27172  1 0.0002694401
+
 anova(glmm_clinical, glmm_clinical_noSex, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1072.2 s.
+# chi2_LR df   p_value
+# p_v 0.5663406  1 0.4517167
+# Bootstrap results -
+#   Raw simulated p-value: 0.473
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.5023312  1 0.4784776
+
 anova(glmm_clinical, glmm_clinical_noTemp, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1131 s.
+# chi2_LR df   p_value
+# p_v 0.7903161  1 0.3740046
+# Bootstrap results -
+#   Raw simulated p-value: 0.398
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 0.728165  1 0.3934786
+
 anova(glmm_clinical, glmm_clinical_noYear, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1056.8 s.
+# chi2_LR df   p_value
+# p_v 2.12205  2 0.3461008
+# Bootstrap results -
+#   Raw simulated p-value: 0.376
+# Bartlett-corrected LR test:
+#   chi2_LR df   p_value
+# p_v 1.95584  2 0.3760926
+
 anova(glmm_clinical, glmm_clinical_noDay, boot.repl = boot.repl, nb_cores = nb_cores)
+# bootstrap took 1295.4 s.
+# chi2_LR df    p_value
+# p_v 3.779962  1 0.05186984
+# Bootstrap results -
+#   Raw simulated p-value: 0.0659
+# Bartlett-corrected LR test:
+#   chi2_LR df    p_value
+# p_v 3.319737  1 0.06845277
 
 ### plots predictions clinical signs ######
 
